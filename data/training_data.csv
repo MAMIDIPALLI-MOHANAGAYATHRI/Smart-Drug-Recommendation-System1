@@ -9,3 +9,44 @@ age,gender,symptoms,medical_history,prescribed_drug
 50,Female,"allergic reaction,itching",none,Loratadine
 28,Male,"fever,cough,cold",none,Paracetamol
 65,Male,"high blood pressure",diabetes,Lisinopril
+32,Female,"fever,body ache,weakness",none,Paracetamol
+48,Male,"stomach pain,acidity",none,Omeprazole
+27,Female,"sneezing,watery eyes,runny nose",none,Cetirizine
+55,Female,"throat infection,fever",hypertension,Azithromycin
+38,Male,"muscle pain,fever",none,Ibuprofen
+42,Female,"seasonal allergies,itching",none,Loratadine
+50,Male,"bacterial infection,fever",diabetes,Amoxicillin
+29,Female,"headache,dizziness",none,Paracetamol
+60,Male,"acid reflux,chest discomfort",hypertension,Omeprazole
+35,Female,"common cold,congestion",none,Cetirizine
+52,Male,"fever,weakness,body pain",none,Paracetamol
+44,Female,"allergic rhinitis,sneezing",none,Loratadine
+58,Male,"respiratory infection",diabetes,Azithromycin
+31,Female,"mild fever,headache",none,Paracetamol
+47,Male,"severe headache,nausea",none,Ibuprofen
+36,Female,"throat pain,cough",none,Amoxicillin
+53,Male,"gastric issues,heartburn",hypertension,Omeprazole
+26,Female,"skin allergy,rash",none,Cetirizine
+62,Male,"high BP,dizziness",diabetes,Lisinopril
+39,Female,"fever,sore throat",none,Azithromycin
+43,Male,"joint inflammation,pain",none,Ibuprofen
+33,Female,"cold symptoms,sneezing",none,Loratadine
+56,Male,"chest infection,cough",hypertension,Amoxicillin
+28,Female,"migraine,sensitivity to light",none,Paracetamol
+49,Male,"stomach ulcer,acidity",diabetes,Omeprazole
+37,Female,"hay fever,itchy eyes",none,Cetirizine
+54,Male,"viral fever,fatigue",none,Paracetamol
+41,Female,"bacterial tonsillitis",none,Azithromycin
+59,Male,"arthritis pain",diabetes,Ibuprofen
+34,Female,"food allergy reaction",none,Loratadine
+46,Male,"acid peptic disease",hypertension,Omeprazole
+30,Male,"fever,chills,weakness",none,Paracetamol
+51,Female,"chronic urticaria",none,Cetirizine
+57,Male,"pneumonia symptoms",diabetes,Azithromycin
+40,Female,"tension headache",none,Paracetamol
+63,Male,"osteoarthritis",hypertension,Ibuprofen
+29,Female,"upper respiratory infection",none,Amoxicillin
+45,Male,"GERD symptoms",none,Omeprazole
+38,Female,"allergic conjunctivitis",none,Loratadine
+52,Male,"flu symptoms,fever",diabetes,Paracetamol
+35,Male,"dental pain,swelling",none,Amoxicillin
