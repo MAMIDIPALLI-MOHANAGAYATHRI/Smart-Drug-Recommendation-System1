@@ -1,0 +1,11 @@
+drug1,drug2,severity
+Aspirin,Warfarin,severe
+Aspirin,Ibuprofen,moderate
+Metformin,Alcohol,severe
+Lisinopril,Potassium,severe
+Amoxicillin,Methotrexate,moderate
+Paracetamol,Alcohol,moderate
+Ibuprofen,Lisinopril,moderate
+Omeprazole,Clopidogrel,moderate
+Azithromycin,Warfarin,moderate
+Cetirizine,Alcohol,moderate

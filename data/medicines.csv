@@ -1,0 +1,11 @@
+drug_name,category,age_min,age_max,kidney_safe,liver_safe,pregnancy_safe
+Paracetamol,Painkiller,1,99,YES,NO,YES
+Ibuprofen,NSAID,12,99,NO,YES,NO
+Aspirin,Blood Thinner,18,99,NO,NO,NO
+Amoxicillin,Antibiotic,1,99,YES,YES,YES
+Cetirizine,Antihistamine,6,99,YES,YES,YES
+Omeprazole,Antacid,18,99,YES,NO,YES
+Metformin,Antidiabetic,18,80,NO,YES,NO
+Lisinopril,Antihypertensive,18,99,NO,YES,NO
+Azithromycin,Antibiotic,6,99,YES,YES,NO
+Loratadine,Antihistamine,2,99,YES,YES,YES

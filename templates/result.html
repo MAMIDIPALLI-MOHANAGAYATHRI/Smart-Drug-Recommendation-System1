@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Recommendations - SmartRx{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background: linear-gradient(135deg, #E8F4F8 0%, #F8F9FA 100%);">
+    <div class="container">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="fw-bold mb-3">
+                <i class="fas fa-check-circle me-3" style="color: var(--accent-green);"></i>
+                Drug Recommendations
+            </h1>
+            <p class="text-muted">Generated on {{ timestamp }}</p>
+        </div>
+
+        <!-- Patient Summary Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header" style="background: var(--primary-blue); color: white;">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    Patient Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Name:</strong> {{ patient_data.name }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Age:</strong> {{ patient_data.age }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Gender:</strong> {{ patient_data.gender }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Symptoms:</strong> {{ patient_data.symptoms }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safe Recommendations -->
+        {% if safe_drugs %}
+        <div class="mb-5">
+            <h3 class="mb-4" style="color: var(--accent-green);">
+                <i class="fas fa-check-circle me-2"></i>
+                Recommended Medications ({{ safe_drugs|length }})
+            </h3>
+            
+            {% for drug in safe_drugs %}
+            <div class="result-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="drug-name">
+                            <i class="fas fa-pills me-2"></i>
+                            {{ drug.drug }}
+                        </h4>
+                        <span class="badge bg-secondary">{{ drug.category }}</span>
+                    </div>
+                    <div class="confidence-badge">
+                        {{ drug.confidence }}% Confidence
+                    </div>
+                </div>
+                
+                {% if drug.warnings %}
+                <div class="warning-box mt-3">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Warnings:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for warning in drug.warnings %}
+                        <li>{{ warning }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-danger">
+            <i class="fas fa-times-circle me-2"></i>
+            <strong>No Safe Recommendations Found</strong>
+            <p class="mb-0 mt-2">All candidate drugs were rejected due to safety concerns. Please consult a physician.</p>
+        </div>
+        {% endif %}
+
+        <!-- Rejected Drugs -->
+        {% if rejected_drugs %}
+        <div class="mb-5">
+            <h3 class="mb-4" style="color: var(--danger-red);">
+                <i class="fas fa-times-circle me-2"></i>
+                Rejected Medications ({{ rejected_drugs|length }})
+            </h3>
+            
+            {% for drug in rejected_drugs %}
+            <div class="result-card" style="border-left-color: var(--danger-red); opacity: 0.8;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5>{{ drug.drug }}</h5>
+                    </div>
+                    <span class="badge bg-danger">{{ drug.confidence }}%</span>
+                </div>
+                <div class="danger-box mt-2">
+                    {{ drug.reason }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Explanation -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background: var(--accent-light);">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2" style="color: var(--primary-blue);"></i>
+                    Detailed Explanation
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ explanation | safe }}</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center">
+            <a href="/recommend" class="btn btn-primary-custom me-3">
+                <i class="fas fa-redo me-2"></i>
+                New Recommendation
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-primary">
+                <i class="fas fa-print me-2"></i>
+                Print Report
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}

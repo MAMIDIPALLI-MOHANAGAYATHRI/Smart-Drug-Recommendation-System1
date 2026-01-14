@@ -1,0 +1,11 @@
+age,gender,symptoms,medical_history,prescribed_drug
+45,Male,"fever,headache,body pain",none,Paracetamol
+30,Female,"cold,runny nose,sneezing",none,Cetirizine
+55,Male,"chest pain,cough",hypertension,Amoxicillin
+25,Female,"headache,nausea",none,Paracetamol
+60,Male,"joint pain,swelling",diabetes,Ibuprofen
+35,Female,"sore throat,fever",none,Azithromycin
+40,Male,"acid reflux,heartburn",none,Omeprazole
+50,Female,"allergic reaction,itching",none,Loratadine
+28,Male,"fever,cough,cold",none,Paracetamol
+65,Male,"high blood pressure",diabetes,Lisinopril
