@@ -1,0 +1,20 @@
+{
+    "model_type": "RandomForestClassifier",
+    "n_estimators": 100,
+    "train_accuracy": 0.85,
+    "test_accuracy": 0.5454545454545454,
+    "n_features": 48,
+    "n_classes": 8,
+    "classes": [
+        "Amoxicillin",
+        "Azithromycin",
+        "Cetirizine",
+        "Ibuprofen",
+        "Lisinopril",
+        "Loratadine",
+        "Omeprazole",
+        "Paracetamol"
+    ],
+    "training_samples": 40,
+    "test_samples": 11
+}
