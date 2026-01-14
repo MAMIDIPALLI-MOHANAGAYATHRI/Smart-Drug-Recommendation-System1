@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>
+            <i class="fas fa-pills me-3"></i>
+            Smart Drug Recommendation System
+        </h1>
+        <p class="lead">AI-Powered Clinical Decision Support for Safe & Personalized Medication</p>
+        <a href="/recommend" class="btn btn-hero">
+            <i class="fas fa-arrow-right me-2"></i>
+            Start Recommendation
+        </a>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Why Choose SmartRx?</h2>
+            <p class="text-muted">Advanced AI technology for safer prescriptions</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>AI-Powered</h3>
+                    <p class="text-muted">Machine learning algorithms trained on thousands of patient-drug outcomes</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Safety First</h3>
+                    <p class="text-muted">Automatic allergy, interaction, and contraindication checking</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Instant Results</h3>
+                    <p class="text-muted">Get personalized recommendations in under 3 seconds</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3>Reduces Errors</h3>
+                    <p class="text-muted">Minimizes prescription mistakes and adverse drug reactions</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Confidence Scores</h3>
+                    <p class="text-muted">See prediction confidence for every recommendation</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Explanations</h3>
+                    <p class="text-muted">Understand why drugs were recommended or rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-white">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-md-3">
+                <h2 class="fw-bold" style="color: var(--primary-blue);">85%+</h2>
+                <p class="text-muted">Prediction Accuracy</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="fw-bold" style="color: var(--accent-green);">2-5s</h2>
+                <p class="text-muted">Response Time</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="fw-bold" style="color: var(--primary-blue);">100%</h2>
+                <p class="text-muted">Safety Checks</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="fw-bold" style="color: var(--accent-green);">24/7</h2>
+                <p class="text-muted">Availability</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
