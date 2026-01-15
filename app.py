@@ -1,12 +1,13 @@
 """
 Smart Drug Recommendation System
-Doctor-First Validation Workflow
+Doctor-First Validation Workflow with Database Integration
 Author: CSE-AI Team, KKR & KSR Institute of Technology
-Version: 2.0 (Doctor-First Validation)
+Version: 3.0 (Database Integrated)
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
-import pandas as pd
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from config import config
+from models import db, Patient, Drug, DrugInteraction, Prescription, PatientVisit, DrugFoodInteraction
 import numpy as np
 import joblib
 import os
@@ -15,35 +16,38 @@ from datetime import datetime
 from utils import (
     preprocess_patient_data,
     check_allergy,
-    check_drug_interaction,
-    check_contraindications,
+    check_drug_interaction_db,
+    check_contraindications_db,
+    check_drug_food_interaction_db,
     generate_explanation,
     load_model
 )
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'smartrx-ai-2026-kitsguntur'
+app.config.from_object(config['development'])
 
-# Global variables for model and data
+# Initialize database
+db.init_app(app)
+
+# Global variables for model
 model = None
 vectorizer = None
-medicines_df = None
-interactions_df = None
 
 
 def initialize_app():
     """Load model and data on startup"""
-    global model, vectorizer, medicines_df, interactions_df
+    global model, vectorizer
     
-    try:
-        # Load medicines database
-        medicines_df = pd.read_csv('data/medicines.csv')
-        print(f"✓ Medicines database: {len(medicines_df)} drugs")
+    with app.app_context():
+        # Create tables if not exist
+        db.create_all()
         
-        # Load interactions database
-        interactions_df = pd.read_csv('data/interactions.csv')
-        print(f"✓ Interactions database: {len(interactions_df)} interactions")
+        print(f"✓ Database initialized")
+        print(f"✓ Drugs in database: {Drug.query.count()}")
+        print(f"✓ Drug interactions: {DrugInteraction.query.count()}")
+        print(f"✓ Drug-food interactions: {DrugFoodInteraction.query.count()}")
+        print(f"✓ Patients in database: {Patient.query.count()}")
         
         # Try to load ML model
         try:
@@ -58,9 +62,6 @@ def initialize_app():
             vectorizer = None
         
         print("✓ Application initialized successfully")
-        
-    except Exception as e:
-        print(f"✗ Error initializing app: {str(e)}")
 
 
 @app.route('/')
@@ -81,13 +82,39 @@ def patient_dashboard():
     Display patient dashboard after registration
     """
     try:
-        # Collect patient data from form
+        # Check if searching for existing patient
+        search_id = request.form.get('search_patient_id')
+        if search_id:
+            patient = Patient.query.filter_by(patient_id=search_id).first()
+            if patient:
+                patient_data = patient.to_dict()
+                # Get latest visit
+                latest_visit = PatientVisit.query.filter_by(patient_id=patient.id).order_by(PatientVisit.visit_date.desc()).first()
+                if latest_visit:
+                    patient_data.update({
+                        'symptoms': latest_visit.symptoms,
+                        'blood_pressure': latest_visit.blood_pressure,
+                        'temperature': latest_visit.temperature,
+                        'hemoglobin': latest_visit.hemoglobin,
+                        'blood_sugar': latest_visit.blood_sugar,
+                        'creatinine': latest_visit.creatinine,
+                        'liver_enzyme': latest_visit.liver_enzyme
+                    })
+                
+                patient_json = json.dumps(patient_data)
+                return render_template('patient_dashboard.html',
+                                     patient=patient_data,
+                                     patient_json=patient_json,
+                                     existing_patient=True)
+        
+        # New patient registration
         patient_data = {
             'id': request.form.get('patient_id') or f"PT{datetime.now().strftime('%Y%m%d%H%M%S')}",
             'name': request.form.get('patient_name', ''),
             'age': int(request.form.get('age', 0)),
             'gender': request.form.get('gender', ''),
             'contact': request.form.get('contact', ''),
+            'email': request.form.get('email', ''),
             'symptoms': request.form.get('symptoms', ''),
             'past_history': request.form.get('past_history', ''),
             'surgical_history': request.form.get('surgical_history', ''),
@@ -109,6 +136,38 @@ def patient_dashboard():
             return render_template('patient_form.html', 
                                  error="Patient name and symptoms are required")
         
+        # Save patient to database
+        patient = Patient(
+            patient_id=patient_data['id'],
+            name=patient_data['name'],
+            age=patient_data['age'],
+            gender=patient_data['gender'],
+            contact=patient_data['contact'],
+            email=patient_data['email'],
+            allergies=patient_data['allergies'],
+            chronic_conditions=patient_data['past_history']
+        )
+        db.session.add(patient)
+        db.session.commit()
+        
+        # Save visit record
+        visit = PatientVisit(
+            patient_id=patient.id,
+            chief_complaint=patient_data['symptoms'],
+            symptoms=patient_data['symptoms'],
+            blood_pressure=patient_data['blood_pressure'] or None,
+            temperature=float(patient_data['temperature']) if patient_data['temperature'] else None,
+            hemoglobin=float(patient_data['hemoglobin']) if patient_data['hemoglobin'] else None,
+            blood_sugar=float(patient_data['blood_sugar']) if patient_data['blood_sugar'] else None,
+            creatinine=float(patient_data['creatinine']) if patient_data['creatinine'] else None,
+            liver_enzyme=float(patient_data['liver_enzyme']) if patient_data['liver_enzyme'] else None,
+            treatment_plan=patient_data['clinical_notes']
+        )
+        db.session.add(visit)
+        db.session.commit()
+        
+        print(f"✓ Saved patient: {patient_data['name']} (ID: {patient_data['id']})")
+        
         # Convert to JSON for passing between pages
         patient_json = json.dumps(patient_data)
         
@@ -120,6 +179,7 @@ def patient_dashboard():
         print(f"Error in patient dashboard: {str(e)}")
         import traceback
         traceback.print_exc()
+        db.session.rollback()
         return render_template('patient_form.html',
                              error=f"An error occurred: {str(e)}")
 
@@ -138,10 +198,10 @@ def validate_drug():
         if not drug_name:
             return redirect(url_for('patient_dashboard'))
         
-        # Get drug information
-        drug_info = medicines_df[medicines_df['drug_name'].str.lower() == drug_name.lower()]
+        # Get drug information from database
+        drug_info = Drug.query.filter(Drug.drug_name.ilike(drug_name)).first()
         
-        if drug_info.empty:
+        if not drug_info:
             # Drug not in database - cannot validate
             return render_template('drug_validation_result.html',
                                  patient=patient_data,
@@ -152,11 +212,10 @@ def validate_drug():
                                  checks={
                                      'allergy': {'is_safe': False, 'message': '❌ Drug not found in database'},
                                      'interaction': {'is_safe': False, 'message': ''},
-                                     'contraindication': {'is_safe': False, 'message': ''}
+                                     'contraindication': {'is_safe': False, 'message': ''},
+                                     'food': {'is_safe': True, 'message': ''}
                                  },
                                  alternatives=get_ai_alternatives(patient_data))
-        
-        drug_info = drug_info.iloc[0]
         
         # Perform safety checks
         checks = {}
@@ -168,25 +227,27 @@ def validate_drug():
         if not allergy_check['is_safe']:
             is_safe = False
         
-        # Check 2: Drug Interactions
-        interaction_check = check_drug_interaction(
+        # Check 2: Drug Interactions (Database)
+        interaction_check = check_drug_interaction_db(
             drug_name,
-            patient_data['current_medications'],
-            interactions_df
+            patient_data['current_medications']
         )
         checks['interaction'] = interaction_check
         if not interaction_check['is_safe']:
             is_safe = False
         
-        # Check 3: Contraindications
-        contraindication_check = check_contraindications(
-            drug_name,
-            patient_data,
-            medicines_df
+        # Check 3: Contraindications (Database)
+        contraindication_check = check_contraindications_db(
+            drug_info,
+            patient_data
         )
         checks['contraindication'] = contraindication_check
         if not contraindication_check['is_safe']:
             is_safe = False
+        
+        # Check 4: Drug-Food Interactions (NEW!)
+        food_check = check_drug_food_interaction_db(drug_name)
+        checks['food'] = food_check
         
         # Get alternatives if drug is unsafe
         alternatives = []
@@ -245,6 +306,7 @@ def ai_suggest():
         ✓ Allergy verification<br>
         ✓ Drug interaction detection<br>
         ✓ Contraindication checking<br>
+        ✓ Food interaction warnings<br>
         """
         
         return render_template('result.html',
@@ -271,9 +333,27 @@ def confirm_prescription():
         patient_data = json.loads(patient_json)
         drug_name = request.form.get('drug_name')
         
-        # Get drug category
-        drug_info = medicines_df[medicines_df['drug_name'] == drug_name]
-        drug_category = drug_info.iloc[0]['category'] if not drug_info.empty else 'General Medicine'
+        # Get drug info from database
+        drug_info = Drug.query.filter(Drug.drug_name.ilike(drug_name)).first()
+        drug_category = drug_info.category if drug_info else 'General Medicine'
+        
+        # Save prescription to database
+        patient = Patient.query.filter_by(patient_id=patient_data['id']).first()
+        if patient:
+            prescription = Prescription(
+                prescription_id=f"RX{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                patient_id=patient.id,
+                drug_name=drug_name,
+                diagnosis=patient_data.get('symptoms', ''),
+                symptoms=patient_data.get('symptoms', ''),
+                clinical_notes=patient_data.get('clinical_notes', ''),
+                allergy_check_passed=True,
+                interaction_check_passed=True,
+                contraindication_check_passed=True
+            )
+            db.session.add(prescription)
+            db.session.commit()
+            print(f"✓ Prescription saved: {prescription.prescription_id}")
         
         return render_template('prescription_confirmed.html',
                              patient=patient_data,
@@ -283,12 +363,63 @@ def confirm_prescription():
     
     except Exception as e:
         print(f"Error confirming prescription: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return redirect(url_for('recommend'))
+
+
+@app.route('/search-drugs')
+def search_drugs():
+    """
+    Search drugs by name or category (AJAX endpoint)
+    """
+    query = request.args.get('q', '').strip()
+    category = request.args.get('category', '').strip()
+    
+    if not query and not category:
+        return jsonify([])
+    
+    # Search in database
+    drugs_query = Drug.query
+    
+    if query:
+        drugs_query = drugs_query.filter(
+            (Drug.drug_name.ilike(f'%{query}%')) | 
+            (Drug.generic_name.ilike(f'%{query}%'))
+        )
+    
+    if category:
+        drugs_query = drugs_query.filter(Drug.category.ilike(f'%{category}%'))
+    
+    drugs = drugs_query.limit(20).all()
+    
+    results = [{
+        'drug_name': drug.drug_name,
+        'generic_name': drug.generic_name,
+        'category': drug.category,
+        'price': drug.price,
+        'dosage_forms': drug.dosage_forms
+    } for drug in drugs]
+    
+    return jsonify(results)
+
+
+@app.route('/drug-info/<drug_name>')
+def drug_info(drug_name):
+    """
+    Get detailed drug information
+    """
+    drug = Drug.query.filter(Drug.drug_name.ilike(drug_name)).first()
+    
+    if not drug:
+        return jsonify({'error': 'Drug not found'}), 404
+    
+    return jsonify(drug.to_dict())
 
 
 def get_ai_alternatives(patient_data):
     """
-    Get AI-suggested alternative drugs
+    Get AI-suggested alternative drugs from database
     """
     try:
         if model is None:
@@ -303,15 +434,14 @@ def get_ai_alternatives(patient_data):
         # Create recommendations
         recommendations = []
         for drug, confidence in zip(drug_names, predictions):
-            # Get drug category
-            drug_info = medicines_df[medicines_df['drug_name'] == drug]
-            category = drug_info.iloc[0]['category'] if not drug_info.empty else 'General Medicine'
-            
-            recommendations.append({
-                'drug': drug,
-                'confidence': round(confidence * 100, 2),
-                'category': category
-            })
+            # Get drug from database
+            drug_obj = Drug.query.filter(Drug.drug_name.ilike(drug)).first()
+            if drug_obj:
+                recommendations.append({
+                    'drug': drug_obj.drug_name,
+                    'confidence': round(confidence * 100, 2),
+                    'category': drug_obj.category
+                })
         
         # Sort by confidence
         recommendations.sort(key=lambda x: x['confidence'], reverse=True)
@@ -321,8 +451,13 @@ def get_ai_alternatives(patient_data):
         for rec in recommendations[:10]:
             # Quick safety check
             allergy_safe = check_allergy(rec['drug'], patient_data['allergies'])['is_safe']
-            interaction_safe = check_drug_interaction(rec['drug'], patient_data['current_medications'], interactions_df)['is_safe']
-            contra_safe = check_contraindications(rec['drug'], patient_data, medicines_df)['is_safe']
+            interaction_safe = check_drug_interaction_db(rec['drug'], patient_data['current_medications'])['is_safe']
+            
+            drug_obj = Drug.query.filter(Drug.drug_name.ilike(rec['drug'])).first()
+            if drug_obj:
+                contra_safe = check_contraindications_db(drug_obj, patient_data)['is_safe']
+            else:
+                contra_safe = True
             
             if allergy_safe and interaction_safe and contra_safe:
                 safe_recommendations.append(rec)
@@ -339,28 +474,41 @@ def get_ai_alternatives(patient_data):
 
 def get_rule_based_suggestions(patient_data):
     """
-    Fallback rule-based suggestions when ML model not available
+    Fallback rule-based suggestions from database
     """
     symptoms_lower = patient_data['symptoms'].lower()
     
+    # Query database for relevant drugs
     suggestions = []
     
     if any(word in symptoms_lower for word in ['fever', 'pain', 'headache', 'ache']):
-        suggestions.append({'drug': 'Paracetamol', 'confidence': 90, 'category': 'Painkiller'})
-        suggestions.append({'drug': 'Ibuprofen', 'confidence': 85, 'category': 'NSAID'})
+        drugs = Drug.query.filter(Drug.category.in_(['Painkiller', 'NSAID'])).limit(2).all()
+        for drug in drugs:
+            suggestions.append({
+                'drug': drug.drug_name,
+                'confidence': 88,
+                'category': drug.category
+            })
     
     if any(word in symptoms_lower for word in ['cold', 'allerg', 'sneez', 'itch']):
-        suggestions.append({'drug': 'Cetirizine', 'confidence': 88, 'category': 'Antihistamine'})
-        suggestions.append({'drug': 'Loratadine', 'confidence': 82, 'category': 'Antihistamine'})
+        drugs = Drug.query.filter(Drug.category == 'Antihistamine').limit(2).all()
+        for drug in drugs:
+            suggestions.append({
+                'drug': drug.drug_name,
+                'confidence': 85,
+                'category': drug.category
+            })
     
     if any(word in symptoms_lower for word in ['cough', 'throat', 'infection']):
-        suggestions.append({'drug': 'Azithromycin', 'confidence': 86, 'category': 'Antibiotic'})
-        suggestions.append({'drug': 'Amoxicillin', 'confidence': 83, 'category': 'Antibiotic'})
+        drugs = Drug.query.filter(Drug.category == 'Antibiotic').limit(2).all()
+        for drug in drugs:
+            suggestions.append({
+                'drug': drug.drug_name,
+                'confidence': 82,
+                'category': drug.category
+            })
     
-    if any(word in symptoms_lower for word in ['acid', 'stomach', 'heartburn', 'reflux']):
-        suggestions.append({'drug': 'Omeprazole', 'confidence': 91, 'category': 'Antacid'})
-    
-    # Remove duplicates and return top 5
+    # Remove duplicates
     seen = set()
     unique_suggestions = []
     for s in suggestions:
@@ -376,10 +524,12 @@ def health_check():
     """API health check endpoint"""
     return jsonify({
         'status': 'healthy',
+        'database': 'connected',
         'model_loaded': model is not None,
-        'medicines_count': len(medicines_df) if medicines_df is not None else 0,
-        'interactions_count': len(interactions_df) if interactions_df is not None else 0,
-        'workflow': 'doctor-first-validation',
+        'drugs_count': Drug.query.count(),
+        'patients_count': Patient.query.count(),
+        'prescriptions_count': Prescription.query.count(),
+        'workflow': 'doctor-first-validation-db',
         'timestamp': datetime.now().isoformat()
     })
 
@@ -394,13 +544,14 @@ def page_not_found(e):
 def internal_error(e):
     """500 error handler"""
     print(f"Internal error: {str(e)}")
+    db.session.rollback()
     return render_template('index.html'), 500
 
 
 if __name__ == '__main__':
     print("\n" + "="*70)
-    print(" " * 15 + "🏥 SMART DRUG RECOMMENDATION SYSTEM")
-    print(" " * 18 + "Doctor-First Validation Workflow")
+    print(" " * 12 + "🏥 SMART DRUG RECOMMENDATION SYSTEM v3.0")
+    print(" " * 18 + "Database Integrated + Enhanced AI")
     print("="*70)
     print("📚 B.Tech CSE-AI Project | KKR & KSR Institute of Technology")
     print("👥 Team: Batch 22JR1A4319")
@@ -418,7 +569,11 @@ if __name__ == '__main__':
     print("📍 Network URL:  http://0.0.0.0:5000")
     print("="*70)
     print("\n⌨️  Press CTRL+C to stop the server")
-    print("\n💡 Workflow: Doctor enters drug → System validates → Shows alternatives")
+    print("\n💡 New Features:")
+    print("   • SQLite Database Integration")
+    print("   • Patient Records Saved")
+    print("   • Drug-Food Interaction Checks")
+    print("   • Drug Search API")
     print("="*70 + "\n")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
