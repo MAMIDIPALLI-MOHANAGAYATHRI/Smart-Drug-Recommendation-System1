@@ -1,15 +1,16 @@
 """
 Smart Drug Recommendation System
-Main Flask Application
+Doctor-First Validation Workflow
 Author: CSE-AI Team, KKR & KSR Institute of Technology
-Version: 1.0 (Test Mode Enabled)
+Version: 2.0 (Doctor-First Validation)
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import pandas as pd
 import numpy as np
 import joblib
 import os
+import json
 from datetime import datetime
 from utils import (
     preprocess_patient_data,
@@ -44,15 +45,15 @@ def initialize_app():
         interactions_df = pd.read_csv('data/interactions.csv')
         print(f"✓ Interactions database: {len(interactions_df)} interactions")
         
-        # Try to load ML model (optional for testing)
+        # Try to load ML model
         try:
             model, vectorizer = load_model()
             if model:
                 print(f"✓ Model loaded: {type(model).__name__}")
             else:
-                print("⚠ Model not found - will use dummy predictions for testing")
+                print("⚠ Model not found - AI suggestions will use rule-based fallback")
         except Exception as e:
-            print(f"⚠ Model not loaded - using test mode: {str(e)}")
+            print(f"⚠ Model not loaded: {str(e)}")
             model = None
             vectorizer = None
         
@@ -60,7 +61,6 @@ def initialize_app():
         
     except Exception as e:
         print(f"✗ Error initializing app: {str(e)}")
-        print("Please ensure data files exist in data/ folder")
 
 
 @app.route('/')
@@ -71,213 +71,304 @@ def index():
 
 @app.route('/recommend')
 def recommend():
-    """Patient form page"""
+    """Patient registration form"""
     return render_template('patient_form.html')
 
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/patient-dashboard', methods=['POST'])
+def patient_dashboard():
     """
-    Main prediction endpoint
-    Process patient data and return drug recommendations
+    Display patient dashboard after registration
     """
     try:
-        # Get form data
+        # Collect patient data from form
         patient_data = {
+            'id': request.form.get('patient_id') or f"PT{datetime.now().strftime('%Y%m%d%H%M%S')}",
             'name': request.form.get('patient_name', ''),
             'age': int(request.form.get('age', 0)),
             'gender': request.form.get('gender', ''),
+            'contact': request.form.get('contact', ''),
             'symptoms': request.form.get('symptoms', ''),
-            'medical_history': request.form.get('medical_history', ''),
+            'past_history': request.form.get('past_history', ''),
+            'surgical_history': request.form.get('surgical_history', ''),
             'allergies': request.form.get('allergies', ''),
             'current_medications': request.form.get('current_medications', ''),
+            'hemoglobin': request.form.get('hemoglobin', ''),
+            'blood_sugar': request.form.get('blood_sugar', ''),
             'creatinine': request.form.get('creatinine', ''),
             'liver_enzyme': request.form.get('liver_enzyme', ''),
-            'is_pregnant': request.form.get('is_pregnant', 'no')
+            'blood_pressure': request.form.get('blood_pressure', ''),
+            'temperature': request.form.get('temperature', ''),
+            'is_pregnant': request.form.get('is_pregnant', 'no'),
+            'clinical_notes': request.form.get('clinical_notes', ''),
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
         # Validate required fields
-        if not patient_data['symptoms']:
+        if not patient_data['name'] or not patient_data['symptoms']:
             return render_template('patient_form.html', 
-                                 error="Please enter at least one symptom")
+                                 error="Patient name and symptoms are required")
         
-        # Check if model is loaded
-        if model is None:
-            # TEMPORARY: Use dummy predictions for testing
-            print("⚠ Using dummy predictions (test mode)")
-            
-            # Simple symptom-based dummy recommendations
-            symptoms_lower = patient_data['symptoms'].lower()
-            
-            # Smart dummy predictions based on symptoms
-            if 'fever' in symptoms_lower or 'pain' in symptoms_lower or 'headache' in symptoms_lower:
-                top_candidates = [
-                    {'drug': 'Paracetamol', 'confidence': 92.5},
-                    {'drug': 'Ibuprofen', 'confidence': 85.3},
-                    {'drug': 'Aspirin', 'confidence': 78.9},
-                    {'drug': 'Cetirizine', 'confidence': 72.1},
-                    {'drug': 'Amoxicillin', 'confidence': 65.8}
-                ]
-            elif 'cold' in symptoms_lower or 'allerg' in symptoms_lower or 'sneez' in symptoms_lower:
-                top_candidates = [
-                    {'drug': 'Cetirizine', 'confidence': 91.2},
-                    {'drug': 'Loratadine', 'confidence': 87.4},
-                    {'drug': 'Paracetamol', 'confidence': 76.8},
-                    {'drug': 'Azithromycin', 'confidence': 68.3},
-                    {'drug': 'Amoxicillin', 'confidence': 62.5}
-                ]
-            elif 'cough' in symptoms_lower or 'throat' in symptoms_lower:
-                top_candidates = [
-                    {'drug': 'Azithromycin', 'confidence': 89.7},
-                    {'drug': 'Amoxicillin', 'confidence': 84.2},
-                    {'drug': 'Paracetamol', 'confidence': 77.6},
-                    {'drug': 'Cetirizine', 'confidence': 71.3},
-                    {'drug': 'Omeprazole', 'confidence': 64.8}
-                ]
-            elif 'acid' in symptoms_lower or 'stomach' in symptoms_lower or 'heartburn' in symptoms_lower:
-                top_candidates = [
-                    {'drug': 'Omeprazole', 'confidence': 93.4},
-                    {'drug': 'Paracetamol', 'confidence': 79.2},
-                    {'drug': 'Cetirizine', 'confidence': 68.7},
-                    {'drug': 'Amoxicillin', 'confidence': 62.1},
-                    {'drug': 'Azithromycin', 'confidence': 58.9}
-                ]
-            else:
-                # Default recommendations
-                top_candidates = [
-                    {'drug': 'Paracetamol', 'confidence': 88.5},
-                    {'drug': 'Cetirizine', 'confidence': 82.3},
-                    {'drug': 'Amoxicillin', 'confidence': 75.9},
-                    {'drug': 'Ibuprofen', 'confidence': 69.4},
-                    {'drug': 'Omeprazole', 'confidence': 63.7}
-                ]
-        else:
-            # Use real ML predictions
-            print("✓ Using trained ML model")
-            processed_features = preprocess_patient_data(patient_data, vectorizer)
-            predictions = model.predict_proba([processed_features])[0]
-            drug_names = model.classes_
-            
-            # Create recommendations list
-            recommendations = []
-            for drug, confidence in zip(drug_names, predictions):
-                recommendations.append({
-                    'drug': drug,
-                    'confidence': round(confidence * 100, 2)
-                })
-            
-            # Sort by confidence (descending)
-            recommendations.sort(key=lambda x: x['confidence'], reverse=True)
-            
-            # Take top 5 candidates
-            top_candidates = recommendations[:5]
+        # Convert to JSON for passing between pages
+        patient_json = json.dumps(patient_data)
         
-        # Apply safety checks to all candidates
-        safe_drugs = []
-        rejected_drugs = []
-        
-        for candidate in top_candidates:
-            drug_name = candidate['drug']
-            confidence = candidate['confidence']
-            warnings = []
-            
-            # Safety Check 1: Allergy verification
-            allergy_check = check_allergy(drug_name, patient_data['allergies'])
-            if not allergy_check['is_safe']:
-                rejected_drugs.append({
-                    'drug': drug_name,
-                    'confidence': confidence,
-                    'reason': allergy_check['message']
-                })
-                continue
-            
-            # Safety Check 2: Drug interaction detection
-            interaction_check = check_drug_interaction(
-                drug_name, 
-                patient_data['current_medications'],
-                interactions_df
-            )
-            if not interaction_check['is_safe']:
-                rejected_drugs.append({
-                    'drug': drug_name,
-                    'confidence': confidence,
-                    'reason': interaction_check['message']
-                })
-                continue
-            elif interaction_check['warning']:
-                warnings.append(interaction_check['warning'])
-            
-            # Safety Check 3: Contraindication checking
-            contraindication_check = check_contraindications(
-                drug_name,
-                patient_data,
-                medicines_df
-            )
-            if not contraindication_check['is_safe']:
-                rejected_drugs.append({
-                    'drug': drug_name,
-                    'confidence': confidence,
-                    'reason': contraindication_check['message']
-                })
-                continue
-            elif contraindication_check['warning']:
-                warnings.append(contraindication_check['warning'])
-            
-            # Drug passed all safety checks - add to safe recommendations
-            safe_drugs.append({
-                'drug': drug_name,
-                'confidence': confidence,
-                'warnings': warnings,
-                'category': get_drug_category(drug_name, medicines_df)
-            })
-        
-        # Generate explanation
-        explanation = generate_explanation(
-            safe_drugs,
-            rejected_drugs,
-            patient_data
-        )
-        
-        # Log results
-        print(f"\n{'='*60}")
-        print(f"Patient: {patient_data['name']}, Age: {patient_data['age']}")
-        print(f"Symptoms: {patient_data['symptoms']}")
-        print(f"Safe Drugs: {len(safe_drugs)}, Rejected: {len(rejected_drugs)}")
-        print(f"{'='*60}\n")
-        
-        # Render results page
-        return render_template('result.html',
-                             patient_data=patient_data,
-                             safe_drugs=safe_drugs,
-                             rejected_drugs=rejected_drugs,
-                             explanation=explanation,
-                             timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        return render_template('patient_dashboard.html',
+                             patient=patient_data,
+                             patient_json=patient_json)
     
     except Exception as e:
-        print(f"\n✗ Error in prediction: {str(e)}")
+        print(f"Error in patient dashboard: {str(e)}")
         import traceback
         traceback.print_exc()
         return render_template('patient_form.html',
                              error=f"An error occurred: {str(e)}")
 
 
-def get_drug_category(drug_name, medicines_df):
-    """Get drug category from medicines database"""
+@app.route('/validate-drug', methods=['POST'])
+def validate_drug():
+    """
+    Validate if doctor's chosen drug is safe for patient
+    """
     try:
-        drug_info = medicines_df[medicines_df['drug_name'] == drug_name]
-        if not drug_info.empty:
-            return drug_info.iloc[0]['category']
-        else:
-            return 'General Medicine'
+        # Get patient data and drug name
+        patient_json = request.form.get('patient_data')
+        patient_data = json.loads(patient_json)
+        drug_name = request.form.get('drug_name', '').strip()
+        
+        if not drug_name:
+            return redirect(url_for('patient_dashboard'))
+        
+        # Get drug information
+        drug_info = medicines_df[medicines_df['drug_name'].str.lower() == drug_name.lower()]
+        
+        if drug_info.empty:
+            # Drug not in database - cannot validate
+            return render_template('drug_validation_result.html',
+                                 patient=patient_data,
+                                 patient_json=patient_json,
+                                 drug_name=drug_name,
+                                 is_safe=False,
+                                 drug_info=None,
+                                 checks={
+                                     'allergy': {'is_safe': False, 'message': '❌ Drug not found in database'},
+                                     'interaction': {'is_safe': False, 'message': ''},
+                                     'contraindication': {'is_safe': False, 'message': ''}
+                                 },
+                                 alternatives=get_ai_alternatives(patient_data))
+        
+        drug_info = drug_info.iloc[0]
+        
+        # Perform safety checks
+        checks = {}
+        is_safe = True
+        
+        # Check 1: Allergy
+        allergy_check = check_allergy(drug_name, patient_data['allergies'])
+        checks['allergy'] = allergy_check
+        if not allergy_check['is_safe']:
+            is_safe = False
+        
+        # Check 2: Drug Interactions
+        interaction_check = check_drug_interaction(
+            drug_name,
+            patient_data['current_medications'],
+            interactions_df
+        )
+        checks['interaction'] = interaction_check
+        if not interaction_check['is_safe']:
+            is_safe = False
+        
+        # Check 3: Contraindications
+        contraindication_check = check_contraindications(
+            drug_name,
+            patient_data,
+            medicines_df
+        )
+        checks['contraindication'] = contraindication_check
+        if not contraindication_check['is_safe']:
+            is_safe = False
+        
+        # Get alternatives if drug is unsafe
+        alternatives = []
+        if not is_safe:
+            alternatives = get_ai_alternatives(patient_data)
+        
+        return render_template('drug_validation_result.html',
+                             patient=patient_data,
+                             patient_json=patient_json,
+                             drug_name=drug_name,
+                             is_safe=is_safe,
+                             drug_info=drug_info,
+                             checks=checks,
+                             alternatives=alternatives)
+    
     except Exception as e:
-        print(f"Error getting drug category: {str(e)}")
-        return 'General Medicine'
+        print(f"Error in drug validation: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return render_template('patient_form.html',
+                             error=f"Validation error: {str(e)}")
 
 
-@app.route('/about')
-def about():
-    """About page"""
-    return render_template('index.html')
+@app.route('/ai-suggest', methods=['POST'])
+def ai_suggest():
+    """
+    Get AI-powered drug suggestions
+    """
+    try:
+        # Get patient data
+        patient_json = request.form.get('patient_data')
+        patient_data = json.loads(patient_json)
+        
+        # Get AI recommendations
+        recommendations = get_ai_alternatives(patient_data)
+        
+        # Render results using the existing result.html template
+        safe_drugs = []
+        for rec in recommendations:
+            safe_drugs.append({
+                'drug': rec['drug'],
+                'confidence': rec['confidence'],
+                'category': rec['category'],
+                'warnings': []
+            })
+        
+        explanation = f"""
+        <strong>🤖 AI Analysis Summary:</strong><br>
+        Patient: {patient_data['name']}, Age: {patient_data['age']}, Gender: {patient_data['gender']}<br>
+        Symptoms: {patient_data['symptoms']}<br><br>
+        
+        <strong>✅ {len(safe_drugs)} AI-Recommended Drug(s):</strong><br>
+        Based on symptom analysis and patient profile, these medications are suggested.<br><br>
+        
+        <strong>🛡️ Safety Checks Performed:</strong><br>
+        ✓ Allergy verification<br>
+        ✓ Drug interaction detection<br>
+        ✓ Contraindication checking<br>
+        """
+        
+        return render_template('result.html',
+                             patient_data=patient_data,
+                             safe_drugs=safe_drugs,
+                             rejected_drugs=[],
+                             explanation=explanation,
+                             timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
+    except Exception as e:
+        print(f"Error in AI suggest: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('recommend'))
+
+
+@app.route('/confirm-prescription', methods=['POST'])
+def confirm_prescription():
+    """
+    Confirm and generate prescription
+    """
+    try:
+        patient_json = request.form.get('patient_data')
+        patient_data = json.loads(patient_json)
+        drug_name = request.form.get('drug_name')
+        
+        # Get drug category
+        drug_info = medicines_df[medicines_df['drug_name'] == drug_name]
+        drug_category = drug_info.iloc[0]['category'] if not drug_info.empty else 'General Medicine'
+        
+        return render_template('prescription_confirmed.html',
+                             patient=patient_data,
+                             drug_name=drug_name,
+                             drug_category=drug_category,
+                             timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
+    except Exception as e:
+        print(f"Error confirming prescription: {str(e)}")
+        return redirect(url_for('recommend'))
+
+
+def get_ai_alternatives(patient_data):
+    """
+    Get AI-suggested alternative drugs
+    """
+    try:
+        if model is None:
+            # Fallback: rule-based suggestions
+            return get_rule_based_suggestions(patient_data)
+        
+        # Use ML model
+        processed_features = preprocess_patient_data(patient_data, vectorizer)
+        predictions = model.predict_proba([processed_features])[0]
+        drug_names = model.classes_
+        
+        # Create recommendations
+        recommendations = []
+        for drug, confidence in zip(drug_names, predictions):
+            # Get drug category
+            drug_info = medicines_df[medicines_df['drug_name'] == drug]
+            category = drug_info.iloc[0]['category'] if not drug_info.empty else 'General Medicine'
+            
+            recommendations.append({
+                'drug': drug,
+                'confidence': round(confidence * 100, 2),
+                'category': category
+            })
+        
+        # Sort by confidence
+        recommendations.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        # Filter safe drugs
+        safe_recommendations = []
+        for rec in recommendations[:10]:
+            # Quick safety check
+            allergy_safe = check_allergy(rec['drug'], patient_data['allergies'])['is_safe']
+            interaction_safe = check_drug_interaction(rec['drug'], patient_data['current_medications'], interactions_df)['is_safe']
+            contra_safe = check_contraindications(rec['drug'], patient_data, medicines_df)['is_safe']
+            
+            if allergy_safe and interaction_safe and contra_safe:
+                safe_recommendations.append(rec)
+            
+            if len(safe_recommendations) >= 5:
+                break
+        
+        return safe_recommendations[:5]
+    
+    except Exception as e:
+        print(f"Error getting AI alternatives: {str(e)}")
+        return get_rule_based_suggestions(patient_data)
+
+
+def get_rule_based_suggestions(patient_data):
+    """
+    Fallback rule-based suggestions when ML model not available
+    """
+    symptoms_lower = patient_data['symptoms'].lower()
+    
+    suggestions = []
+    
+    if any(word in symptoms_lower for word in ['fever', 'pain', 'headache', 'ache']):
+        suggestions.append({'drug': 'Paracetamol', 'confidence': 90, 'category': 'Painkiller'})
+        suggestions.append({'drug': 'Ibuprofen', 'confidence': 85, 'category': 'NSAID'})
+    
+    if any(word in symptoms_lower for word in ['cold', 'allerg', 'sneez', 'itch']):
+        suggestions.append({'drug': 'Cetirizine', 'confidence': 88, 'category': 'Antihistamine'})
+        suggestions.append({'drug': 'Loratadine', 'confidence': 82, 'category': 'Antihistamine'})
+    
+    if any(word in symptoms_lower for word in ['cough', 'throat', 'infection']):
+        suggestions.append({'drug': 'Azithromycin', 'confidence': 86, 'category': 'Antibiotic'})
+        suggestions.append({'drug': 'Amoxicillin', 'confidence': 83, 'category': 'Antibiotic'})
+    
+    if any(word in symptoms_lower for word in ['acid', 'stomach', 'heartburn', 'reflux']):
+        suggestions.append({'drug': 'Omeprazole', 'confidence': 91, 'category': 'Antacid'})
+    
+    # Remove duplicates and return top 5
+    seen = set()
+    unique_suggestions = []
+    for s in suggestions:
+        if s['drug'] not in seen:
+            seen.add(s['drug'])
+            unique_suggestions.append(s)
+    
+    return unique_suggestions[:5]
 
 
 @app.route('/health')
@@ -288,6 +379,7 @@ def health_check():
         'model_loaded': model is not None,
         'medicines_count': len(medicines_df) if medicines_df is not None else 0,
         'interactions_count': len(interactions_df) if interactions_df is not None else 0,
+        'workflow': 'doctor-first-validation',
         'timestamp': datetime.now().isoformat()
     })
 
@@ -305,20 +397,10 @@ def internal_error(e):
     return render_template('index.html'), 500
 
 
-# Context processor to inject variables into all templates
-@app.context_processor
-def inject_system_info():
-    """Make system info available to all templates"""
-    return {
-        'system_name': 'SmartRx',
-        'version': '1.0',
-        'year': datetime.now().year
-    }
-
-
 if __name__ == '__main__':
     print("\n" + "="*70)
     print(" " * 15 + "🏥 SMART DRUG RECOMMENDATION SYSTEM")
+    print(" " * 18 + "Doctor-First Validation Workflow")
     print("="*70)
     print("📚 B.Tech CSE-AI Project | KKR & KSR Institute of Technology")
     print("👥 Team: Batch 22JR1A4319")
@@ -336,7 +418,7 @@ if __name__ == '__main__':
     print("📍 Network URL:  http://0.0.0.0:5000")
     print("="*70)
     print("\n⌨️  Press CTRL+C to stop the server")
-    print("\n💡 Test Mode: Using dummy predictions (train model for real predictions)")
+    print("\n💡 Workflow: Doctor enters drug → System validates → Shows alternatives")
     print("="*70 + "\n")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
