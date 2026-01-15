@@ -227,3 +227,227 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(el);
     });
 });
+/**
+ * Drug Search and Autocomplete Functionality
+ * Phase 11.2 & 11.3 Implementation
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchBox = document.getElementById('drugSearchBox');
+    const searchResults = document.getElementById('searchResults');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const drugNameInput = document.getElementById('drug_name');
+    const drugInfoCard = document.getElementById('drugInfoCard');
+    const drugInfoContent = document.getElementById('drugInfoContent');
+    
+    let searchTimeout;
+    
+    // Search drugs as user types
+    if (searchBox) {
+        searchBox.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            
+            const query = this.value.trim();
+            const category = categoryFilter.value;
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            // Debounce search
+            searchTimeout = setTimeout(() => {
+                searchDrugs(query, category);
+            }, 300);
+        });
+        
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+    
+    // Category filter change
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            const query = searchBox.value.trim();
+            if (query.length >= 2) {
+                searchDrugs(query, this.value);
+            }
+        });
+    }
+    
+    /**
+     * Search drugs via AJAX
+     */
+    function searchDrugs(query, category) {
+        const params = new URLSearchParams({
+            q: query,
+            category: category
+        });
+        
+        fetch(`/search-drugs?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySearchResults(data);
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+            });
+    }
+    
+    /**
+     * Display search results dropdown
+     */
+    function displaySearchResults(drugs) {
+        searchResults.innerHTML = '';
+        
+        if (drugs.length === 0) {
+            searchResults.innerHTML = `
+                <div class="list-group-item text-muted">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    No drugs found
+                </div>
+            `;
+            searchResults.style.display = 'block';
+            return;
+        }
+        
+        drugs.forEach(drug => {
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'list-group-item list-group-item-action';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">${drug.drug_name}</h6>
+                        <small class="text-muted">
+                            ${drug.generic_name ? drug.generic_name + ' • ' : ''}
+                            ${drug.category}
+                            ${drug.dosage_forms ? ' • ' + drug.dosage_forms : ''}
+                        </small>
+                    </div>
+                    <span class="badge bg-primary">₹${drug.price || 'N/A'}</span>
+                </div>
+            `;
+            
+            // Click to select drug
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectDrug(drug.drug_name);
+                searchResults.style.display = 'none';
+            });
+            
+            // Double-click to view info
+            item.addEventListener('dblclick', function(e) {
+                e.preventDefault();
+                viewDrugInfo(drug.drug_name);
+            });
+            
+            searchResults.appendChild(item);
+        });
+        
+        // Add footer
+        const footer = document.createElement('div');
+        footer.className = 'list-group-item bg-light';
+        footer.innerHTML = `
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Click to select • Double-click for details
+            </small>
+        `;
+        searchResults.appendChild(footer);
+        
+        searchResults.style.display = 'block';
+    }
+    
+    /**
+     * Select drug for validation
+     */
+    function selectDrug(drugName) {
+        if (drugNameInput) {
+            drugNameInput.value = drugName;
+            searchBox.value = drugName;
+            
+            // Highlight the input briefly
+            drugNameInput.classList.add('bg-success-subtle');
+            setTimeout(() => {
+                drugNameInput.classList.remove('bg-success-subtle');
+            }, 1000);
+        }
+    }
+    
+    /**
+     * View detailed drug information
+     */
+    function viewDrugInfo(drugName) {
+        fetch(`/drug-info/${encodeURIComponent(drugName)}`)
+            .then(response => response.json())
+            .then(drug => {
+                displayDrugInfo(drug);
+            })
+            .catch(error => {
+                console.error('Error fetching drug info:', error);
+            });
+    }
+    
+    /**
+     * Display detailed drug information
+     */
+    function displayDrugInfo(drug) {
+        drugInfoContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-primary">${drug.drug_name}</h5>
+                    ${drug.generic_name ? `<p class="text-muted mb-2"><strong>Generic:</strong> ${drug.generic_name}</p>` : ''}
+                    ${drug.brand_names ? `<p class="mb-2"><strong>Brands:</strong> ${drug.brand_names}</p>` : ''}
+                    <p class="mb-2">
+                        <span class="badge bg-info">${drug.category}</span>
+                        ${drug.prescription_required ? '<span class="badge bg-warning ms-2">℞ Required</span>' : ''}
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    ${drug.price ? `<h4 class="text-success">₹${drug.price}</h4>` : ''}
+                    ${drug.pregnancy_category ? `<span class="badge bg-secondary">Pregnancy: ${drug.pregnancy_category}</span>` : ''}
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h6><i class="fas fa-heartbeat me-2"></i>Indication</h6>
+                    <p>${drug.indication || 'Not specified'}</p>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <h6><i class="fas fa-pills me-2"></i>Dosage</h6>
+                    <p>${drug.standard_dosage || 'Consult physician'}</p>
+                    <small class="text-muted">Forms: ${drug.dosage_forms || 'N/A'}</small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Side Effects</h6>
+                    <p class="small">${drug.side_effects || 'See package insert'}</p>
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <button class="btn btn-primary btn-sm" onclick="selectDrug('${drug.drug_name}')">
+                    <i class="fas fa-check me-1"></i> Select This Drug
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('drugInfoCard').style.display='none'">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
+            </div>
+        `;
+        
+        drugInfoCard.style.display = 'block';
+        drugInfoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Make selectDrug globally available
+    window.selectDrug = selectDrug;
+});

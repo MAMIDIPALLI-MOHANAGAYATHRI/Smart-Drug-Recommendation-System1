@@ -1,0 +1,48 @@
+drug_name,food_item,interaction_type,severity,description,recommendation
+Paracetamol,Alcohol,avoid,severe,Increases risk of liver toxicity,Avoid alcohol while taking paracetamol
+Ibuprofen,Alcohol,avoid,moderate,Increases risk of GI bleeding,Avoid or limit alcohol consumption
+Aspirin,Alcohol,avoid,severe,Significantly increases bleeding risk,Do not consume alcohol
+Metformin,Alcohol,avoid,severe,Increases risk of lactic acidosis,Avoid excessive alcohol
+Warfarin,Green leafy vegetables,caution,moderate,Vitamin K reduces effectiveness,Maintain consistent intake
+Warfarin,Cranberry juice,avoid,moderate,May increase bleeding risk,Avoid cranberry products
+Warfarin,Alcohol,avoid,severe,Increases bleeding risk,Avoid alcohol
+Tetracycline,Dairy products,avoid,severe,Calcium binds to drug reducing absorption,Take 2 hours before/after dairy
+Doxycycline,Dairy products,avoid,moderate,Reduces drug absorption,Avoid dairy 2 hours before/after
+Doxycycline,Calcium supplements,avoid,moderate,Reduces drug effectiveness,Space out by 2-3 hours
+Ciprofloxacin,Dairy products,avoid,moderate,Calcium reduces absorption,Take on empty stomach
+Ciprofloxacin,Caffeine,caution,minor,May increase caffeine effects,Limit caffeine intake
+Levothyroxine,Soy products,caution,moderate,May interfere with absorption,Take 4 hours apart
+Levothyroxine,Coffee,caution,moderate,Reduces absorption,Take 30-60 minutes before coffee
+Levothyroxine,Calcium supplements,avoid,moderate,Decreases absorption,Take 4 hours apart
+Levothyroxine,Iron supplements,avoid,moderate,Reduces effectiveness,Space out by 4 hours
+Omeprazole,Calcium,caution,minor,May reduce calcium absorption long-term,Ensure adequate calcium intake
+Alendronate,Coffee,avoid,moderate,Reduces absorption,Take with plain water only
+Alendronate,Food,avoid,severe,Greatly reduces absorption,Take 30 min before any food
+Lisinopril,Potassium-rich foods,caution,moderate,May cause hyperkalemia,Monitor potassium intake
+Lisinopril,Salt substitutes,avoid,moderate,Contains potassium - risk of hyperkalemia,Avoid potassium-based salt substitutes
+Spironolactone,Potassium-rich foods,caution,severe,Risk of dangerous hyperkalemia,Limit bananas avocados potatoes
+Spironolactone,Salt substitutes,avoid,severe,High potassium content,Do not use
+Atorvastatin,Grapefruit juice,avoid,severe,Increases drug levels causing toxicity,Avoid grapefruit completely
+Simvastatin,Grapefruit juice,avoid,severe,Dramatically increases drug concentration,Never consume grapefruit
+Amlodipine,Grapefruit juice,caution,moderate,May increase side effects,Limit or avoid grapefruit
+MAOIs,Aged cheese,avoid,severe,Can cause hypertensive crisis,Avoid all aged/fermented foods
+MAOIs,Cured meats,avoid,severe,High tyramine content,Strictly avoid
+MAOIs,Soy sauce,avoid,severe,Contains tyramine,Do not consume
+Digoxin,High-fiber foods,caution,minor,May reduce absorption,Take separately from high-fiber meals
+Digoxin,Licorice,avoid,moderate,Increases toxicity risk,Avoid licorice products
+Metronidazole,Alcohol,avoid,severe,Causes severe disulfiram-like reaction,No alcohol during and 3 days after treatment
+Azithromycin,Antacids,caution,moderate,Reduces absorption,Take 1 hour before or 2 hours after antacids
+Clarithromycin,Grapefruit juice,caution,moderate,May increase drug levels,Limit grapefruit intake
+Isoniazid,Cheese,caution,moderate,May cause headache and flushing,Limit aged cheese
+Isoniazid,Alcohol,avoid,severe,Increases liver toxicity,Avoid alcohol completely
+Phenytoin,Alcohol,avoid,severe,Alters drug levels unpredictably,No alcohol consumption
+Phenytoin,Tube feeding,avoid,moderate,Reduces absorption,Hold feeding 2 hours before/after
+Furosemide,Licorice,caution,moderate,May worsen potassium loss,Avoid licorice products
+Hydrochlorothiazide,Licorice,caution,moderate,Increases potassium loss,Limit licorice
+Prednisone,Grapefruit juice,caution,minor,May increase side effects,Limit grapefruit
+Cyclosporine,Grapefruit juice,avoid,severe,Increases drug levels significantly,Completely avoid grapefruit
+Tacrolimus,Grapefruit juice,avoid,severe,Dangerous increase in drug levels,Never consume grapefruit
+Theophylline,Caffeine,caution,moderate,Increases stimulant effects,Limit coffee tea energy drinks
+Theophylline,High-protein diet,caution,minor,May increase drug clearance,Maintain consistent protein intake
+Insulin,Alcohol,caution,moderate,Increases hypoglycemia risk,Avoid alcohol or eat with food
+Glipizide,Alcohol,caution,moderate,Risk of severe hypoglycemia,Limit alcohol consumption
