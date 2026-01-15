@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Patient Information - SmartRx{% endblock %}
+{% block title %}New Patient - SmartRx{% endblock %}
 
 {% block content %}
 <section class="py-5" style="background: linear-gradient(135deg, #E8F4F8 0%, #F8F9FA 100%);">
@@ -8,15 +8,15 @@
         <!-- Page Header -->
         <div class="text-center mb-5">
             <h1 class="fw-bold mb-3">
-                <i class="fas fa-user-injured me-3" style="color: var(--primary-blue);"></i>
-                Patient Information
+                <i class="fas fa-user-plus me-3" style="color: var(--primary-blue);"></i>
+                Patient Registration & Reports
             </h1>
-            <p class="text-muted">Enter patient details to get personalized drug recommendations</p>
+            <p class="text-muted">Enter patient details and medical information</p>
         </div>
 
         <!-- Form Container -->
         <div class="form-container">
-            <form id="patientForm" method="POST" action="/predict" onsubmit="return validateForm()">
+            <form id="patientForm" method="POST" action="/patient-dashboard" onsubmit="return validateForm()">
                 
                 <!-- Patient Demographics -->
                 <div class="mb-4">
@@ -26,10 +26,19 @@
                     </h4>
                     
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label for="patientId" class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Patient ID (Optional)
+                            </label>
+                            <input type="text" class="form-control" id="patientId" 
+                                   name="patient_id" placeholder="Auto-generated if empty">
+                        </div>
+                        
+                        <div class="col-md-8">
                             <label for="patientName" class="form-label">
                                 <i class="fas fa-user"></i>
-                                Patient Name
+                                Patient Full Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="patientName" 
                                    name="patient_name" placeholder="Enter full name" required>
@@ -38,7 +47,7 @@
                         <div class="col-md-3">
                             <label for="age" class="form-label">
                                 <i class="fas fa-calendar"></i>
-                                Age
+                                Age <span class="text-danger">*</span>
                             </label>
                             <input type="number" class="form-control" id="age" 
                                    name="age" placeholder="Age" min="1" max="120" required>
@@ -47,7 +56,7 @@
                         <div class="col-md-3">
                             <label for="gender" class="form-label">
                                 <i class="fas fa-venus-mars"></i>
-                                Gender
+                                Gender <span class="text-danger">*</span>
                             </label>
                             <select class="form-select" id="gender" name="gender" required>
                                 <option value="">Select</option>
@@ -56,27 +65,36 @@
                                 <option value="Other">Other</option>
                             </select>
                         </div>
+                        
+                        <div class="col-md-6">
+                            <label for="contact" class="form-label">
+                                <i class="fas fa-phone"></i>
+                                Contact Number
+                            </label>
+                            <input type="tel" class="form-control" id="contact" 
+                                   name="contact" placeholder="+91 9876543210">
+                        </div>
                     </div>
                 </div>
 
                 <hr class="my-4">
 
-                <!-- Symptoms -->
+                <!-- Current Complaints -->
                 <div class="mb-4">
                     <h4 class="mb-3" style="color: var(--primary-blue);">
-                        <i class="fas fa-thermometer-half me-2"></i>
-                        Symptoms
+                        <i class="fas fa-stethoscope me-2"></i>
+                        Current Complaints
                     </h4>
                     
                     <label for="symptoms" class="form-label">
-                        <i class="fas fa-stethoscope"></i>
-                        Current Symptoms (comma-separated)
+                        <i class="fas fa-thermometer-half"></i>
+                        Chief Complaints / Symptoms <span class="text-danger">*</span>
                     </label>
                     <textarea class="form-control" id="symptoms" name="symptoms" 
-                              rows="3" placeholder="E.g., fever, headache, cough, body pain" required></textarea>
+                              rows="3" placeholder="E.g., Fever since 3 days, severe headache, body pain, weakness" required></textarea>
                     <small class="text-muted">
                         <i class="fas fa-info-circle"></i>
-                        Enter symptoms separated by commas
+                        Describe symptoms in detail
                     </small>
                 </div>
 
@@ -85,75 +103,96 @@
                 <!-- Medical History -->
                 <div class="mb-4">
                     <h4 class="mb-3" style="color: var(--primary-blue);">
-                        <i class="fas fa-file-medical me-2"></i>
+                        <i class="fas fa-history me-2"></i>
                         Medical History
                     </h4>
                     
-                    <label for="medicalHistory" class="form-label">
-                        <i class="fas fa-history"></i>
-                        Chronic Conditions (Optional)
-                    </label>
-                    <textarea class="form-control" id="medicalHistory" name="medical_history" 
-                              rows="2" placeholder="E.g., diabetes, hypertension, asthma"></textarea>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle"></i>
-                        Leave blank if none
-                    </small>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="pastHistory" class="form-label">
+                                <i class="fas fa-file-medical"></i>
+                                Past Medical History
+                            </label>
+                            <textarea class="form-control" id="pastHistory" name="past_history" 
+                                      rows="2" placeholder="E.g., Diabetes since 2020, Hypertension"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="surgicalHistory" class="form-label">
+                                <i class="fas fa-procedures"></i>
+                                Surgical History
+                            </label>
+                            <textarea class="form-control" id="surgicalHistory" name="surgical_history" 
+                                      rows="2" placeholder="E.g., Appendectomy in 2018"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <hr class="my-4">
 
-                <!-- Allergies -->
+                <!-- Critical Information -->
                 <div class="mb-4">
                     <h4 class="mb-3" style="color: var(--danger-red);">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Allergies (Important!)
+                        Critical Safety Information
                     </h4>
                     
-                    <label for="allergies" class="form-label">
-                        <i class="fas fa-allergies"></i>
-                        Known Drug Allergies
-                    </label>
-                    <input type="text" class="form-control" id="allergies" 
-                           name="allergies" placeholder="E.g., Penicillin, Sulfa drugs, Aspirin">
-                    <small class="text-muted">
-                        <i class="fas fa-shield-alt"></i>
-                        Critical for safety - enter all known allergies
-                    </small>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Important:</strong> Accurate allergy and medication information is critical for patient safety
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="allergies" class="form-label">
+                                <i class="fas fa-allergies"></i>
+                                Known Drug Allergies
+                            </label>
+                            <input type="text" class="form-control" id="allergies" 
+                                   name="allergies" placeholder="E.g., Penicillin, Sulfa drugs, Aspirin">
+                            <small class="text-muted">Separate multiple allergies with commas</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="currentMedications" class="form-label">
+                                <i class="fas fa-prescription-bottle"></i>
+                                Current Medications
+                            </label>
+                            <textarea class="form-control" id="currentMedications" name="current_medications" 
+                                      rows="2" placeholder="E.g., Metformin 500mg BD, Lisinopril 10mg OD"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <hr class="my-4">
 
-                <!-- Current Medications -->
-                <div class="mb-4">
-                    <h4 class="mb-3" style="color: var(--primary-blue);">
-                        <i class="fas fa-pills me-2"></i>
-                        Current Medications
-                    </h4>
-                    
-                    <label for="currentMedications" class="form-label">
-                        <i class="fas fa-prescription-bottle"></i>
-                        Medications Currently Taking
-                    </label>
-                    <textarea class="form-control" id="currentMedications" name="current_medications" 
-                              rows="2" placeholder="E.g., Metformin, Lisinopril, Aspirin"></textarea>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle"></i>
-                        Helps check drug interactions
-                    </small>
-                </div>
-
-                <hr class="my-4">
-
-                <!-- Lab Values (Optional) -->
+                <!-- Lab Reports -->
                 <div class="mb-4">
                     <h4 class="mb-3" style="color: var(--primary-blue);">
                         <i class="fas fa-flask me-2"></i>
-                        Lab Values (Optional)
+                        Laboratory Reports
                     </h4>
                     
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label for="hemoglobin" class="form-label">
+                                <i class="fas fa-vial"></i>
+                                Hemoglobin (g/dL)
+                            </label>
+                            <input type="number" step="0.1" class="form-control" id="hemoglobin" 
+                                   name="hemoglobin" placeholder="E.g., 13.5">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="bloodSugar" class="form-label">
+                                <i class="fas fa-vial"></i>
+                                Blood Sugar (mg/dL)
+                            </label>
+                            <input type="number" step="1" class="form-control" id="bloodSugar" 
+                                   name="blood_sugar" placeholder="E.g., 110">
+                        </div>
+                        
+                        <div class="col-md-3">
                             <label for="creatinine" class="form-label">
                                 <i class="fas fa-vial"></i>
                                 Creatinine (mg/dL)
@@ -163,7 +202,7 @@
                             <small class="text-muted">Kidney function</small>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="liverEnzyme" class="form-label">
                                 <i class="fas fa-vial"></i>
                                 ALT/SGPT (U/L)
@@ -171,6 +210,24 @@
                             <input type="number" step="1" class="form-control" id="liverEnzyme" 
                                    name="liver_enzyme" placeholder="E.g., 40">
                             <small class="text-muted">Liver function</small>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="bloodPressure" class="form-label">
+                                <i class="fas fa-heartbeat"></i>
+                                Blood Pressure
+                            </label>
+                            <input type="text" class="form-control" id="bloodPressure" 
+                                   name="blood_pressure" placeholder="E.g., 120/80">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="temperature" class="form-label">
+                                <i class="fas fa-thermometer"></i>
+                                Temperature (°F)
+                            </label>
+                            <input type="number" step="0.1" class="form-control" id="temperature" 
+                                   name="temperature" placeholder="E.g., 98.6">
                         </div>
                         
                         <div class="col-md-4">
@@ -187,11 +244,28 @@
                     </div>
                 </div>
 
+                <hr class="my-4">
+
+                <!-- Additional Notes -->
+                <div class="mb-4">
+                    <h4 class="mb-3" style="color: var(--primary-blue);">
+                        <i class="fas fa-notes-medical me-2"></i>
+                        Additional Clinical Notes
+                    </h4>
+                    
+                    <label for="clinicalNotes" class="form-label">
+                        <i class="fas fa-pen"></i>
+                        Doctor's Observations
+                    </label>
+                    <textarea class="form-control" id="clinicalNotes" name="clinical_notes" 
+                              rows="3" placeholder="Any additional clinical observations or notes"></textarea>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="text-center mt-5">
                     <button type="submit" class="btn btn-primary-custom">
-                        <i class="fas fa-robot me-2"></i>
-                        Get AI Recommendations
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Continue to Patient Dashboard
                     </button>
                 </div>
 
@@ -200,7 +274,7 @@
                     <div class="spinner-border" role="status"></div>
                     <p class="mt-3 text-muted">
                         <i class="fas fa-cog fa-spin me-2"></i>
-                        Analyzing patient data and checking safety constraints...
+                        Loading patient dashboard...
                     </p>
                 </div>
             </form>
