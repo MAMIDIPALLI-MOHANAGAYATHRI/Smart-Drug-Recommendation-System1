@@ -518,6 +518,48 @@ def get_rule_based_suggestions(patient_data):
     
     return unique_suggestions[:5]
 
+@app.route('/analyze-symptoms', methods=['POST'])
+def analyze_symptoms():
+    """
+    Analyze symptoms using NLP (Phase 12.5)
+    AJAX endpoint
+    """
+    try:
+        from nlp_utils import extract_symptoms_nlp, generate_symptom_summary, suggest_missing_information
+        
+        symptom_text = request.json.get('symptoms', '')
+        
+        if not symptom_text or len(symptom_text.strip()) < 3:
+            return jsonify({
+                'success': False,
+                'message': 'Please enter symptom description'
+            })
+        
+        # Extract symptoms using NLP
+        result = extract_symptoms_nlp(symptom_text)
+        
+        # Generate summary
+        summary_html = generate_symptom_summary(result)
+        
+        # Get suggestions
+        suggestions = suggest_missing_information(result)
+        
+        return jsonify({
+            'success': True,
+            'extraction': result,
+            'summary_html': summary_html,
+            'suggestions': suggestions,
+            'formatted_symptoms': result['symptom_text']
+        })
+    
+    except Exception as e:
+        print(f"Error in symptom analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Analysis error: {str(e)}'
+        }), 500
 
 @app.route('/health')
 def health_check():
