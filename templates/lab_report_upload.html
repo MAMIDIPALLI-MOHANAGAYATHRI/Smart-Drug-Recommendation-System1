@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Report Upload - SmartRx{% endblock %}
+
+{% block content %}
+<button type="button" class="btn btn-primary" onclick="window.history.back()">
+    <i class="fas fa-arrow-left me-2"></i>
+    Back
+</button>
+<section class="py-5" style="background: linear-gradient(135deg, #E3F2FD 0%, #F8F9FA 100%); min-height: 100vh;">
+    <div class="container">
+        
+        <!-- Page Header -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">
+                <i class="fas fa-file-medical me-2 text-info"></i>
+                Lab Report OCR Upload
+            </h2>
+            <p class="text-muted">Upload lab reports for automatic value extraction</p>
+        </div>
+
+        <div class="row">
+            <!-- Upload Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            Upload Lab Report
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Patient Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Patient *</label>
+                            <select class="form-select form-select-lg" id="patientSelect" required>
+                                <option value="">Choose patient...</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id }}">
+                                    {{ patient.name }} ({{ patient.patient_id }}) - Age {{ patient.age }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Lab Report File *</label>
+                            <input type="file" class="form-control form-control-lg" 
+                                   id="labReportFile" 
+                                   accept=".pdf,.png,.jpg,.jpeg,.tiff"
+                                   required>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Accepts: PDF, PNG, JPG, TIFF | Max size: 5 MB
+                            </small>
+                        </div>
+
+                        <!-- File Preview -->
+                        <div id="filePreview" class="mb-3" style="display: none;">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="mb-2">Selected File:</h6>
+                                    <p class="mb-0" id="fileName"></p>
+                                    <small class="text-muted" id="fileSize"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload Button -->
+                        <button type="button" class="btn btn-info btn-lg w-100" 
+                                id="uploadBtn" onclick="uploadLabReport()">
+                            <i class="fas fa-robot me-2"></i>
+                            Upload & Process with OCR
+                        </button>
+
+                        <!-- Processing Status -->
+                        <div id="uploadStatus" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- How It Works -->
+                <div class="card shadow-lg border-0 mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            How OCR Works
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li class="mb-2">Upload lab report (PDF or image)</li>
+                            <li class="mb-2">OCR engine extracts text (Tesseract)</li>
+                            <li class="mb-2">AI identifies lab values automatically</li>
+                            <li class="mb-2">Values are validated and flagged</li>
+                            <li class="mb-2">Results saved to patient record</li>
+                        </ol>
+
+                        <div class="alert alert-warning mb-0 mt-3">
+                            <small>
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <strong>Tip:</strong> Clear, high-resolution scans work best!
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-lg border-0" id="resultsCard" style="display: none;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            OCR Extraction Results
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- OCR Confidence -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold">OCR Confidence:</span>
+                                <span class="badge bg-info" id="confidenceBadge">0%</span>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" id="confidenceBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Extracted Values -->
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-vials me-2"></i>
+                            Extracted Lab Values:
+                        </h6>
+                        
+                        <div id="extractedValuesList"></div>
+
+                        <!-- Abnormal Flags -->
+                        <div id="abnormalSection" style="display: none;">
+                            <h6 class="text-danger mt-4 mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Abnormal Values Detected:
+                            </h6>
+                            <div id="abnormalList"></div>
+                        </div>
+
+                        <!-- Summary Report -->
+                        <div class="mt-4">
+                            <h6 class="text-secondary mb-3">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Summary Report:
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <pre id="summaryReport" style="white-space: pre-wrap; font-size: 0.9em;"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-4">
+                            <button class="btn btn-primary" onclick="viewPatientHistory()">
+                                <i class="fas fa-history me-2"></i>
+                                View Patient History
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="printReport()">
+                                <i class="fas fa-print me-2"></i>
+                                Print Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Report -->
+                <div class="card shadow-lg border-0" id="sampleCard">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0 text-secondary">
+                            <i class="fas fa-image me-2"></i>
+                            Sample Lab Report
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="https://via.placeholder.com/400x500/E3F2FD/0277BD?text=Sample+Lab+Report" 
+                             class="img-fluid rounded" 
+                             alt="Sample Lab Report">
+                        <p class="text-muted mt-3 mb-0">
+                            <small>Upload a similar format for best results</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Uploads -->
+        <div class="card shadow-lg border-0 mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Lab Report Uploads
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Report ID</th>
+                                <th>Patient</th>
+                                <th>Upload Date</th>
+                                <th>Status</th>
+                                <th>Values Extracted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentUploadsTable">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    No recent uploads
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// File preview
+document.getElementById('labReportFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('filePreview').style.display = 'block';
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+    }
+});
+
+async function uploadLabReport() {
+    const fileInput = document.getElementById('labReportFile');
+    const patientSelect = document.getElementById('patientSelect');
+    const statusDiv = document.getElementById('uploadStatus');
+    const uploadBtn = document.getElementById('uploadBtn');
+    
+    // Validation
+    if (!patientSelect.value) {
+        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Please select a patient</div>';
+        return;
+    }
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Please select a file</div>';
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    // File size check (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        statusDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i>File too large. Max 5MB allowed</div>';
+        return;
+    }
+    
+    // Show processing
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    statusDiv.innerHTML = `
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-3"></div>
+                <div>
+                    <strong>Processing lab report...</strong><br>
+                    <small>This may take 10-30 seconds depending on file size</small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('patient_id', patientSelect.value);
+    
+    try {
+        const response = await fetch('/api/upload-lab-report', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayResults(result);
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Success!</strong> Extracted ${Object.keys(result.extracted_values).length} lab values
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Error:</strong> ${result.error}
+                </div>
+            `;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Upload Failed:</strong> ${error.message}
+            </div>
+        `;
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-robot me-2"></i>Upload & Process with OCR';
+    }
+}
+
+function displayResults(result) {
+    // Hide sample, show results
+    document.getElementById('sampleCard').style.display = 'none';
+    document.getElementById('resultsCard').style.display = 'block';
+    
+    // Set confidence
+    const confidence = result.ocr_confidence || 0;
+    document.getElementById('confidenceBadge').textContent = confidence.toFixed(1) + '%';
+    document.getElementById('confidenceBar').style.width = confidence + '%';
+    
+    const barClass = confidence >= 90 ? 'bg-success' : confidence >= 70 ? 'bg-info' : 'bg-warning';
+    document.getElementById('confidenceBar').className = 'progress-bar ' + barClass;
+    
+    // Display extracted values
+    const values = result.extracted_values;
+    let valuesHTML = '<div class="list-group">';
+    
+    for (const [key, value] of Object.entries(values)) {
+        const flag = result.abnormal_flags[key];
+        const statusIcon = flag ? (flag.status === 'NORMAL' ? '✅' : flag.status === 'LOW' ? '⬇️' : '⬆️') : '📊';
+        const statusClass = flag && flag.status !== 'NORMAL' ? 'border-warning' : '';
+        
+        valuesHTML += `
+            <div class="list-group-item ${statusClass}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${statusIcon} ${key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                        <span class="ms-2">${value}</span>
+                        ${flag ? `<small class="text-muted ms-2">(Normal: ${flag.normal_range} ${flag.unit})</small>` : ''}
+                    </div>
+                    ${flag && flag.status !== 'NORMAL' ? `<span class="badge bg-warning">${flag.status}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    valuesHTML += '</div>';
+    document.getElementById('extractedValuesList').innerHTML = valuesHTML;
+    
+    // Display abnormal values
+    const abnormal = Object.entries(result.abnormal_flags).filter(([k, v]) => v.status !== 'NORMAL');
+    if (abnormal.length > 0) {
+        document.getElementById('abnormalSection').style.display = 'block';
+        let abnormalHTML = '<div class="list-group">';
+        
+        abnormal.forEach(([key, flag]) => {
+            const severityClass = flag.severity === 'critical' ? 'danger' : 'warning';
+            abnormalHTML += `
+                <div class="list-group-item list-group-item-${severityClass}">
+                    <strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong> ${flag.value} ${flag.unit}
+                    <span class="badge bg-${severityClass} ms-2">${flag.status}</span>
+                    <br><small>Normal range: ${flag.normal_range} ${flag.unit}</small>
+                </div>
+            `;
+        });
+        abnormalHTML += '</div>';
+        document.getElementById('abnormalList').innerHTML = abnormalHTML;
+    } else {
+        document.getElementById('abnormalSection').style.display = 'none';
+    }
+    
+    // Display summary
+    document.getElementById('summaryReport').textContent = result.summary;
+}
+
+function viewPatientHistory() {
+    const patientId = document.getElementById('patientSelect').value;
+    window.location.href = `/lab-reports/${patientId}`;
+}
+
+function printReport() {
+    window.print();
+}
+</script>
+{% endblock %}

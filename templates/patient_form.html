@@ -3,6 +3,10 @@
 {% block title %}Patient Registration{% endblock %}
 
 {% block content %}
+<button type="button" class="btn btn-primary" onclick="window.history.back()">
+    <i class="fas fa-arrow-left me-2"></i>
+    Back
+</button>
 <section class="py-5" style="background: linear-gradient(135deg, #E8F4F8 0%, #F8F9FA 100%); min-height: 100vh;">
     <div class="container">
         
@@ -36,6 +40,65 @@
             <div class="card-body p-4">
                 <form method="POST" action="/patient-dashboard" id="patientForm">
                     
+<<<<<<< Updated upstream
+=======
+                    <!-- ================================================================ -->
+                    <!-- 🆕 BROWSER-BASED OCR (NO SERVER NEEDED!) -->
+                    <!-- ================================================================ -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 mb-3" style="color: var(--primary-blue);">
+                            <i class="fas fa-file-upload me-2"></i>
+                            Lab Report Upload (Optional)
+                            <span class="badge bg-success ms-2" style="font-size: 0.7em;">BROWSER OCR</span>
+                            <span class="badge bg-info ms-1" style="font-size: 0.7em;">NO SERVER!</span>
+                        </h5>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-magic me-2"></i>
+                            <strong>Smart Browser OCR:</strong> Upload lab report - it processes in your browser!
+                            <br><small>✅ No installation needed | ✅ Works offline | ✅ Super fast for PDFs!</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="labReportFile" 
+                                       accept=".pdf,.png,.jpg,.jpeg">
+                                <small class="text-muted">Accepts: PDF, PNG, JPG (Max 10MB)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" 
+                                        class="btn btn-primary w-100" 
+                                        id="uploadReportBtn"
+                                        onclick="processLabReportInBrowser()">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Process in Browser
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Status -->
+                        <div id="uploadStatus" class="mt-2"></div>
+                        
+                        <!-- OCR Results Preview -->
+                        <div id="ocrResults" class="mt-3" style="display: none;">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Extracted Lab Values (<span id="totalExtracted">0</span> found)
+                                </div>
+                                <div class="card-body">
+                                    <div id="extractedValues"></div>
+                                    <button type="button" class="btn btn-sm btn-success mt-2" onclick="applyExtractedValues()">
+                                        <i class="fas fa-download me-1"></i> Apply to Form Below
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+>>>>>>> Stashed changes
                     <!-- Basic Information Section -->
                     <div class="mb-4">
                         <h5 class="border-bottom pb-2 mb-3" style="color: var(--primary-blue);">
@@ -85,7 +148,27 @@
                                 </select>
                             </div>
 
+<<<<<<< Updated upstream
                             <!-- Contact -->
+=======
+                            <div class="col-md-3 mb-3">
+                                <label for="weight_kg" class="form-label">
+                                    <i class="fas fa-weight text-primary me-1"></i> Weight (kg)
+                                    <span class="badge bg-info" style="font-size: 0.6em;">For Dosing</span>
+                                </label>
+                                <input type="number" step="0.1" class="form-control" id="weight_kg" name="weight_kg" placeholder="e.g., 70.5">
+                                <small class="text-muted">Required for weight-based dosing</small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="height_cm" class="form-label">
+                                    <i class="fas fa-ruler-vertical text-primary me-1"></i> Height (cm)
+                                </label>
+                                <input type="number" step="0.1" class="form-control" id="height_cm" name="height_cm" placeholder="e.g., 175">
+                                <small class="text-muted">Optional (for BSA calculation)</small>
+                            </div>
+
+>>>>>>> Stashed changes
                             <div class="col-md-6 mb-3">
                                 <label for="contact" class="form-label">
                                     Contact Number
@@ -118,6 +201,7 @@
                             <i class="fas fa-stethoscope me-2"></i>
                             Current Complaints
                         </h5>
+<<<<<<< Updated upstream
 
                         <!-- Symptoms with NLP Analysis (Phase 12.5) -->
                         <div class="col-md-12 mb-3">
@@ -143,6 +227,14 @@
                                     <i class="fas fa-info-circle me-1"></i>
                                     Type symptoms naturally - AI will extract medical terms
                                 </small>
+=======
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="symptoms" class="form-label">Chief Complaint / Symptoms *</label>
+                                <textarea class="form-control" id="symptoms" name="symptoms" rows="3" required 
+                                          placeholder="Describe symptoms (e.g., fever, headache, body pain since 2 days)"></textarea>
+>>>>>>> Stashed changes
                             </div>
                             
                             <!-- NLP Analysis Results -->
@@ -162,6 +254,7 @@
                         </div>
                     </div>
 
+<<<<<<< Updated upstream
                     <!-- Medical History Section -->
                     <div class="mb-4">
                         <h5 class="border-bottom pb-2 mb-3" style="color: var(--primary-blue);">
@@ -328,6 +421,87 @@
                                 <label for="is_pregnant" class="form-label">
                                     Pregnancy Status (if Female)
                                 </label>
+=======
+                 <!-- Known Allergies with Dropdown -->
+<div class="col-md-6 mb-3">
+    <label for="allergies" class="form-label">
+        <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+        Known Allergies
+        <span class="badge bg-info" style="font-size: 0.6em;">DROPDOWN</span>
+    </label>
+    <input type="text" 
+           class="form-control" 
+           id="allergies" 
+           name="allergies" 
+           list="allergiesList"
+           placeholder="Select from dropdown or type custom...">
+    <datalist id="allergiesList">
+        <option value="None">
+        <option value="Penicillin">
+        <option value="Sulfa drugs">
+        <option value="Aspirin">
+        <option value="NSAIDs">
+        <option value="Codeine">
+        <option value="Latex">
+        <option value="Cephalosporins">
+    </datalist>
+    <small class="text-muted">💡 Click to see dropdown or type custom</small>
+</div>
+
+<!-- Current Medications with Dropdown -->
+<div class="col-md-6 mb-3">
+    <label for="current_medications" class="form-label">
+        <i class="fas fa-pills text-primary me-1"></i>
+        Current Medications
+        <span class="badge bg-info" style="font-size: 0.6em;">DROPDOWN</span>
+    </label>
+    <input type="text" 
+           class="form-control" 
+           id="current_medications" 
+           name="current_medications" 
+           list="medicationsList"
+           placeholder="Select from dropdown or type custom...">
+    <datalist id="medicationsList">
+        <option value="None">
+        <option value="Aspirin">
+        <option value="Metformin">
+        <option value="Insulin">
+        <option value="Atorvastatin">
+        <option value="Amlodipine">
+        <option value="Omeprazole">
+        <option value="Warfarin">
+    </datalist>
+    <small class="text-muted">💡 Click to see dropdown or type custom</small>
+</div>
+
+<!-- Past Medical History with Dropdown -->
+<div class="col-md-6 mb-3">
+    <label for="past_history" class="form-label">
+        <i class="fas fa-history text-secondary me-1"></i>
+        Past Medical History
+        <span class="badge bg-info" style="font-size: 0.6em;">DROPDOWN</span>
+    </label>
+    <input type="text" 
+           class="form-control" 
+           id="past_history" 
+           name="past_history" 
+           list="pastHistoryList"
+           placeholder="Select from dropdown or type custom...">
+    <datalist id="pastHistoryList">
+        <option value="None">
+        <option value="Diabetes Type 2">
+        <option value="Hypertension">
+        <option value="Asthma">
+        <option value="Heart Disease">
+        <option value="Kidney Disease">
+        <option value="Thyroid Disorder">
+        <option value="Cancer">
+    </datalist>
+    <small class="text-muted">💡 Click to see dropdown or type custom</small>
+</div>
+                            <div class="col-md-6 mb-3">
+                                <label for="is_pregnant" class="form-label">Pregnancy Status (for females)</label>
+>>>>>>> Stashed changes
                                 <select class="form-select" id="is_pregnant" name="is_pregnant">
                                     <option value="no">Not Applicable / No</option>
                                     <option value="yes">Yes (Pregnant)</option>
@@ -356,9 +530,68 @@
                         </div>
                     </div>
 
+<<<<<<< Updated upstream
                     <!-- Form Actions -->
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary-custom btn-lg px-5">
+=======
+                    <!-- Lab Values (Auto-filled by OCR or Manual Entry) -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 mb-3" style="color: var(--primary-blue);">
+                            <i class="fas fa-vials me-2"></i>
+                            Laboratory Values
+                            <span class="badge bg-warning text-dark ms-2" style="font-size: 0.7em;">
+                                <i class="fas fa-magic me-1"></i>AUTO-FILLED BY OCR
+                            </span>
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="hemoglobin" class="form-label">Hemoglobin (g/dL)</label>
+                                <input type="number" step="0.1" class="form-control" id="hemoglobin" name="hemoglobin" 
+                                       placeholder="e.g., 14.5">
+                                <small class="text-muted" id="hemoglobin_status"></small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="blood_sugar" class="form-label">Blood Sugar (mg/dL)</label>
+                                <input type="number" step="0.1" class="form-control" id="blood_sugar" name="blood_sugar" 
+                                       placeholder="e.g., 95">
+                                <small class="text-muted" id="blood_sugar_status"></small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="creatinine" class="form-label">Creatinine (mg/dL)</label>
+                                <input type="number" step="0.1" class="form-control" id="creatinine" name="creatinine" 
+                                       placeholder="e.g., 1.0">
+                                <small class="text-muted" id="creatinine_status"></small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="liver_enzyme" class="form-label">ALT/SGPT (U/L)</label>
+                                <input type="number" step="0.1" class="form-control" id="liver_enzyme" name="liver_enzyme" 
+                                       placeholder="e.g., 35">
+                                <small class="text-muted" id="liver_enzyme_status"></small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="wbc_count" class="form-label">WBC Count (10³/µL)</label>
+                                <input type="number" step="0.1" class="form-control" id="wbc_count" name="wbc_count" 
+                                       placeholder="e.g., 7.5">
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="platelet_count" class="form-label">Platelet Count (10³/µL)</label>
+                                <input type="number" step="0.1" class="form-control" id="platelet_count" name="platelet_count" 
+                                       placeholder="e.g., 250">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+>>>>>>> Stashed changes
                             <i class="fas fa-arrow-right me-2"></i>
                             Continue to Patient Dashboard
                         </button>
@@ -383,3 +616,641 @@
     </div>
 </section>
 {% endblock %}
+<<<<<<< Updated upstream
+=======
+
+{% block extra_js %}
+<!-- Load PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+
+<!-- Load Tesseract.js -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<!-- Browser OCR Class -->
+<script>
+class BrowserOCR {
+    constructor() {
+        this.tesseractLoaded = true;
+        this.pdfjsLoaded = true;
+    }
+
+    async extractFromPDF(file, onProgress) {
+        if (onProgress) onProgress(10, 'Reading PDF...');
+        
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        let fullText = '';
+        const numPages = pdf.numPages;
+        
+        for (let i = 1; i <= numPages; i++) {
+            if (onProgress) {
+                const progress = Math.round((i / numPages) * 100);
+                onProgress(progress, `Reading page ${i} of ${numPages}...`);
+            }
+            
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + ' ';
+        }
+        
+        console.log('📄 Extracted PDF text:', fullText);
+        return fullText.trim();
+    }
+
+    async extractFromImage(file, onProgress) {
+        if (onProgress) onProgress(5, 'Initializing OCR...');
+        
+        const result = await Tesseract.recognize(
+            file,
+            'eng',
+            {
+                logger: info => {
+                    if (info.status === 'recognizing text' && onProgress) {
+                        const progress = Math.round(info.progress * 100);
+                        onProgress(progress, `OCR Progress: ${progress}%`);
+                    }
+                }
+            }
+        );
+        
+        console.log('🖼️ Extracted image text:', result.data.text);
+        return result.data.text;
+    }
+
+    parsePatientInfo(text) {
+        console.log('👤 Parsing complete patient information...');
+        
+        const patientInfo = {};
+        
+        // Helper function
+        const extractValue = (patterns) => {
+            for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    console.log('✅ Patient info match:', match[1]);
+                    return match[1].trim();
+                }
+            }
+            return null;
+        };
+        
+        // ========== PATIENT NAME ==========
+        const name = extractValue([
+            /Patient\s+Name[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+Age|\s+\d|\s+Gender|\s+Sample|\||$)/i,
+            /Name[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+Age|\s+\d|\s+Gender|\||$)/i,
+            /Patient[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+Age|\s+\d|\s+Gender|\||$)/i
+        ]);
+        
+        if (name) {
+            patientInfo.patient_name = name.replace(/\s+/g, ' ');
+            console.log('✅ Name:', name);
+        }
+        
+        // ========== AGE ==========
+        const age = extractValue([
+            /Age[:\s]+(\d+)\s*(?:Years?|yrs?|Y)?/i,
+            /(\d+)\s*Years?\s*(?:\||Age)/i,
+            /(\d+)\s*yrs?/i,
+            /Age.*?(\d+)/i
+        ]);
+        
+        if (age && parseInt(age) > 0 && parseInt(age) < 120) {
+            patientInfo.age = parseInt(age);
+            console.log('✅ Age:', age);
+        }
+        
+        // ========== GENDER ==========
+        const gender = extractValue([
+            /Gender[:\s]+(Male|Female|M|F|Other)/i,
+            /Sex[:\s]+(Male|Female|M|F)/i,
+            /\|\s*(Male|Female|M|F)\s*\|/i
+        ]);
+        
+        if (gender) {
+            let normalizedGender = gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+            if (normalizedGender === 'M') normalizedGender = 'Male';
+            if (normalizedGender === 'F') normalizedGender = 'Female';
+            patientInfo.gender = normalizedGender;
+            console.log('✅ Gender:', normalizedGender);
+        }
+        
+        // ========== WEIGHT (kg) ==========
+        const weight = extractValue([
+            /Weight[:\s]+(\d+\.?\d*)\s*(?:kg|kgs|kilos)?/i,
+            /Body\s+Weight[:\s]+(\d+\.?\d*)/i,
+            /Wt[:\s]+(\d+\.?\d*)/i,
+            /(\d+\.?\d*)\s*kg/i
+        ]);
+        
+        if (weight && parseFloat(weight) > 20 && parseFloat(weight) < 200) {
+            patientInfo.weight_kg = parseFloat(weight);
+            console.log('✅ Weight:', weight, 'kg');
+        }
+        
+        // ========== HEIGHT (cm) ==========
+        const height = extractValue([
+            /Height[:\s]+(\d+\.?\d*)\s*(?:cm|centimeters?)?/i,
+            /Ht[:\s]+(\d+\.?\d*)/i,
+            /(\d+\.?\d*)\s*cm(?:\s|$)/i
+        ]);
+        
+        if (height && parseFloat(height) > 50 && parseFloat(height) < 250) {
+            patientInfo.height_cm = parseFloat(height);
+            console.log('✅ Height:', height, 'cm');
+        }
+        
+        // ========== CONTACT NUMBER ==========
+        const contact = extractValue([
+            /(?:Phone|Contact|Mobile|Tel|Cell)[:\s]+(\+?[\d\s\-\(\)]{10,15})/i,
+            /(\+91[\s\-]?\d{10})/,  // Indian format
+            /(\d{10})/,  // 10 digits
+            /(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/  // Standard format
+        ]);
+        
+        if (contact) {
+            patientInfo.contact = contact.replace(/\s+/g, '');
+            console.log('✅ Contact:', contact);
+        }
+        
+        // ========== EMAIL ==========
+        const email = extractValue([
+            /([\w\.-]+@[\w\.-]+\.\w+)/
+        ]);
+        
+        if (email) {
+            patientInfo.email = email.toLowerCase();
+            console.log('✅ Email:', email);
+        }
+        
+        // ========== BLOOD PRESSURE ==========
+        const bp = extractValue([
+            /(?:Blood\s+Pressure|BP)[:\s]+(\d+\/\d+)/i,
+            /BP[:\s]+(\d+\/\d+)/i,
+            /(\d{2,3}\/\d{2,3})\s*mmHg/i
+        ]);
+        
+        if (bp) {
+            patientInfo.blood_pressure = bp;
+            console.log('✅ Blood Pressure:', bp);
+        }
+        
+        // ========== TEMPERATURE ==========
+        const temp = extractValue([
+            /Temperature[:\s]+(\d+\.?\d*)\s*°?F/i,
+            /Temp[:\s]+(\d+\.?\d*)/i,
+            /(\d+\.?\d*)\s*°F/i,
+            /Body\s+Temp[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (temp && parseFloat(temp) > 90 && parseFloat(temp) < 110) {
+            patientInfo.temperature = parseFloat(temp);
+            console.log('✅ Temperature:', temp, '°F');
+        }
+        
+        // ========== PULSE/HEART RATE ==========
+        const pulse = extractValue([
+            /Pulse[:\s]+(\d+)/i,
+            /Heart\s+Rate[:\s]+(\d+)/i,
+            /HR[:\s]+(\d+)/i,
+            /(\d+)\s*(?:bpm|beats)/i
+        ]);
+        
+        if (pulse && parseInt(pulse) > 40 && parseInt(pulse) < 200) {
+            patientInfo.pulse = parseInt(pulse);
+            console.log('✅ Pulse:', pulse, 'bpm');
+        }
+        
+        // ========== ALLERGIES ==========
+        const allergies = extractValue([
+            /Allergies?[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Known\s+Allergies?[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Drug\s+Allergies?[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Allergic\s+to[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i
+        ]);
+        
+        if (allergies && allergies.toLowerCase() !== 'nil' && allergies.toLowerCase() !== 'none') {
+            patientInfo.allergies = allergies;
+            console.log('✅ Allergies:', allergies);
+        }
+        
+        // ========== CURRENT MEDICATIONS ==========
+        const currentMeds = extractValue([
+            /Current\s+Medications?[:\s]+([A-Za-z\s,0-9]+?)(?:\n|$)/i,
+            /Medications?[:\s]+([A-Za-z\s,0-9]+?)(?:\n|$)/i,
+            /Currently\s+taking[:\s]+([A-Za-z\s,0-9]+?)(?:\n|$)/i,
+            /On\s+Medication[:\s]+([A-Za-z\s,0-9]+?)(?:\n|$)/i
+        ]);
+        
+        if (currentMeds && currentMeds.toLowerCase() !== 'nil' && currentMeds.toLowerCase() !== 'none') {
+            patientInfo.current_medications = currentMeds;
+            console.log('✅ Current Medications:', currentMeds);
+        }
+        
+        // ========== PAST MEDICAL HISTORY ==========
+        const pastHistory = extractValue([
+            /(?:Past\s+)?Medical\s+History[:\s]+([A-Za-z\s,\(\)]+?)(?:\n|$)/i,
+            /Past\s+History[:\s]+([A-Za-z\s,\(\)]+?)(?:\n|$)/i,
+            /History\s+of[:\s]+([A-Za-z\s,\(\)]+?)(?:\n|$)/i,
+            /Chronic\s+Conditions?[:\s]+([A-Za-z\s,\(\)]+?)(?:\n|$)/i
+        ]);
+        
+        if (pastHistory && pastHistory.toLowerCase() !== 'nil' && pastHistory.toLowerCase() !== 'none') {
+            patientInfo.past_history = pastHistory;
+            console.log('✅ Past History:', pastHistory);
+        }
+        
+        // ========== SYMPTOMS/CHIEF COMPLAINT ==========
+        const symptoms = extractValue([
+            /Chief\s+Complaint[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Symptoms?[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Presenting\s+Complaint[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+            /Complaints?[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i
+        ]);
+        
+        if (symptoms) {
+            patientInfo.symptoms = symptoms;
+            console.log('✅ Symptoms:', symptoms);
+        }
+        
+        console.log('👤 Total patient fields extracted:', Object.keys(patientInfo).length);
+        console.log('📋 Patient info:', patientInfo);
+        return patientInfo;
+    }
+
+    parseLabValues(text, gender = 'male') {
+        console.log('🔍 Parsing lab values from text...');
+        console.log('Text length:', text.length, 'characters');
+        
+        const values = {};
+        const abnormalFlags = {};
+        
+        // Helper function to extract number after keyword
+        const extractValue = (patterns) => {
+            for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    console.log('✅ Match found:', pattern, '→', match[1]);
+                    return parseFloat(match[1]);
+                }
+            }
+            return null;
+        };
+        
+        // ========== HEMOGLOBIN - Multiple patterns ==========
+        const hbValue = extractValue([
+            /Hemoglobin[:\s]+(\d+\.?\d*)/i,
+            /\bHb[:\s]+(\d+\.?\d*)/i,
+            /HGB[:\s]+(\d+\.?\d*)/i,
+            /Haemoglobin[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (hbValue) {
+            values.hemoglobin = hbValue;
+            const normalMin = gender === 'female' ? 12 : 13;
+            const normalMax = gender === 'female' ? 15 : 17;
+            abnormalFlags.hemoglobin = {
+                value: hbValue,
+                status: hbValue < normalMin ? 'LOW' : hbValue > normalMax ? 'HIGH' : 'NORMAL',
+                normal_range: `${normalMin}-${normalMax}`,
+                unit: 'g/dL'
+            };
+            console.log('✅ Hemoglobin:', hbValue);
+        }
+        
+        // ========== BLOOD SUGAR - Multiple patterns ==========
+        const bsValue = extractValue([
+            /Blood\s+Sugar[:\s\(Fasting\)]*[:\s]+(\d+\.?\d*)/i,
+            /Glucose[:\s\(Fasting\)]*[:\s]+(\d+\.?\d*)/i,
+            /Sugar[:\s\(Fasting\)]*[:\s]+(\d+\.?\d*)/i,
+            /FBS[:\s]+(\d+\.?\d*)/i,
+            /RBS[:\s]+(\d+\.?\d*)/i,
+            /Fasting.*?(\d+\.?\d*)\s*mg\/dL/i
+        ]);
+        
+        if (bsValue) {
+            values.blood_sugar = bsValue;
+            abnormalFlags.blood_sugar = {
+                value: bsValue,
+                status: bsValue < 70 ? 'LOW' : bsValue > 140 ? 'HIGH' : 'NORMAL',
+                normal_range: '70-140',
+                unit: 'mg/dL'
+            };
+            console.log('✅ Blood Sugar:', bsValue);
+        }
+        
+        // ========== CREATININE - Multiple patterns ==========
+        const crValue = extractValue([
+            /Creatinine[:\s\(Serum\)]*[:\s]+(\d+\.?\d*)/i,
+            /Serum\s+Creatinine[:\s]+(\d+\.?\d*)/i,
+            /Creat[:\s]+(\d+\.?\d*)/i,
+            /S\.\s*Creatinine[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (crValue) {
+            values.creatinine = crValue;
+            const normalMin = gender === 'female' ? 0.6 : 0.7;
+            const normalMax = gender === 'female' ? 1.1 : 1.3;
+            abnormalFlags.creatinine = {
+                value: crValue,
+                status: crValue < normalMin ? 'LOW' : crValue > normalMax ? 'HIGH' : 'NORMAL',
+                normal_range: `${normalMin}-${normalMax}`,
+                unit: 'mg/dL'
+            };
+            console.log('✅ Creatinine:', crValue);
+        }
+        
+        // ========== LIVER ENZYME (ALT/SGPT) - Multiple patterns ==========
+        const altValue = extractValue([
+            /SGPT[:\s\(ALT\)]*[:\s]+(\d+\.?\d*)/i,
+            /ALT[:\s\(SGPT\)]*[:\s]+(\d+\.?\d*)/i,
+            /Liver\s+Enzyme[:\s]+(\d+\.?\d*)/i,
+            /Serum\s+ALT[:\s]+(\d+\.?\d*)/i,
+            /Alanine\s+aminotransferase[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (altValue) {
+            values.liver_enzyme = altValue;
+            abnormalFlags.liver_enzyme = {
+                value: altValue,
+                status: altValue > 40 ? 'HIGH' : 'NORMAL',
+                normal_range: '0-40',
+                unit: 'U/L'
+            };
+            console.log('✅ Liver Enzyme (ALT):', altValue);
+        }
+        
+        // ========== WBC COUNT - Multiple patterns ==========
+        const wbcValue = extractValue([
+            /WBC\s+Count[:\s]+(\d+\.?\d*)/i,
+            /WBC[:\s]+(\d+\.?\d*)/i,
+            /White\s+Blood\s+Cell[:\s]+(\d+\.?\d*)/i,
+            /Total\s+WBC[:\s]+(\d+\.?\d*)/i,
+            /Leucocyte[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (wbcValue) {
+            values.wbc_count = wbcValue;
+            abnormalFlags.wbc_count = {
+                value: wbcValue,
+                status: wbcValue < 4 ? 'LOW' : wbcValue > 11 ? 'HIGH' : 'NORMAL',
+                normal_range: '4-11',
+                unit: '10³/µL'
+            };
+            console.log('✅ WBC Count:', wbcValue);
+        }
+        
+        // ========== PLATELET COUNT - Multiple patterns ==========
+        const pltValue = extractValue([
+            /Platelet\s+Count[:\s]+(\d+\.?\d*)/i,
+            /Platelet[:\s]+(\d+\.?\d*)/i,
+            /PLT[:\s]+(\d+\.?\d*)/i,
+            /Platelets[:\s]+(\d+\.?\d*)/i,
+            /Thrombocyte[:\s]+(\d+\.?\d*)/i
+        ]);
+        
+        if (pltValue) {
+            values.platelet_count = pltValue;
+            abnormalFlags.platelet_count = {
+                value: pltValue,
+                status: pltValue < 150 ? 'LOW' : pltValue > 400 ? 'HIGH' : 'NORMAL',
+                normal_range: '150-400',
+                unit: '10³/µL'
+            };
+            console.log('✅ Platelet Count:', pltValue);
+        }
+        
+        console.log('📊 Total values found:', Object.keys(values).length);
+        console.log('📋 Extracted values:', values);
+        
+        return {
+            extracted_values: values,
+            abnormal_flags: abnormalFlags,
+            total_found: Object.keys(values).length
+        };
+    }
+}
+
+// Create global instance
+window.browserOCR = new BrowserOCR();
+console.log('✅ Browser OCR Ready!');
+</script>
+
+<!-- Form Processing Script -->
+<script>
+let extractedLabData = {};
+let extractedPatientInfo = {};  // 🆕 Store patient info
+
+async function processLabReportInBrowser() {
+    const fileInput = document.getElementById('labReportFile');
+    const statusDiv = document.getElementById('uploadStatus');
+    const resultsDiv = document.getElementById('ocrResults');
+    const uploadBtn = document.getElementById('uploadReportBtn');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        statusDiv.innerHTML = '<div class="alert alert-warning mt-3"><i class="fas fa-exclamation-triangle me-2"></i>Please select a file first</div>';
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const gender = document.getElementById('gender').value.toLowerCase() || 'male';
+    
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    
+    try {
+        let extractedText = '';
+        
+        const onProgress = (progress, message) => {
+            statusDiv.innerHTML = `
+                <div class="alert alert-info mt-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="spinner-border spinner-border-sm me-2"></div>
+                        <strong>${message}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: ${progress}%">${progress}%</div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        // Extract text
+        if (file.type === 'application/pdf') {
+            extractedText = await window.browserOCR.extractFromPDF(file, onProgress);
+        } else if (file.type.startsWith('image/')) {
+            extractedText = await window.browserOCR.extractFromImage(file, onProgress);
+        } else {
+            throw new Error('Unsupported file type. Please upload PDF or image.');
+        }
+        
+        console.log('📄 Full extracted text:', extractedText);
+        
+        // 🆕 Parse patient information FIRST
+        extractedPatientInfo = window.browserOCR.parsePatientInfo(extractedText);
+        
+        // Parse lab values
+        const result = window.browserOCR.parseLabValues(extractedText, gender);
+        
+        if (result.total_found === 0 && Object.keys(extractedPatientInfo).length === 0) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>No lab values found.</strong> Please check the PDF format or enter values manually below.
+                    <br><small class="mt-2">Extracted text preview: ${extractedText.substring(0, 200)}...</small>
+                </div>
+            `;
+            return;
+        }
+        
+        extractedLabData = result.extracted_values;
+        
+        // 🆕 Display BOTH patient info and lab values
+        let valuesHTML = '';
+        
+        // Patient Info Section
+        if (Object.keys(extractedPatientInfo).length > 0) {
+            valuesHTML += '<div class="alert alert-primary mb-3"><strong><i class="fas fa-user me-2"></i>Patient Information</strong></div>';
+            valuesHTML += '<div class="row mb-3">';
+            
+            for (const [key, value] of Object.entries(extractedPatientInfo)) {
+                const iconMap = {
+                    'patient_name': '👤',
+                    'age': '🎂',
+                    'gender': '⚧',
+                    'contact': '📞',
+                    'email': '📧'
+                };
+                const icon = iconMap[key] || '📋';
+                
+                valuesHTML += `
+                    <div class="col-md-6 mb-2 p-2 border rounded" style="background: #cfe2ff;">
+                        <strong>${icon} ${key.replace(/_/g, ' ').toUpperCase()}:</strong>
+                        <span class="text-primary fs-6 ms-2">${value}</span>
+                    </div>
+                `;
+            }
+            valuesHTML += '</div><hr>';
+        }
+        
+        // Lab Values Section
+        if (result.total_found > 0) {
+            valuesHTML += '<div class="alert alert-success mb-3"><strong><i class="fas fa-vials me-2"></i>Lab Values</strong></div>';
+            valuesHTML += '<div class="row">';
+        
+        for (const [key, value] of Object.entries(result.extracted_values)) {
+            const flag = result.abnormal_flags[key];
+            const statusIcon = flag.status === 'NORMAL' ? '✅' : 
+                              flag.status === 'LOW' ? '⬇️' : '⬆️';
+            const statusClass = flag.status === 'NORMAL' ? 'text-success' : 'text-warning';
+            
+            valuesHTML += `
+                <div class="col-md-6 mb-3 p-2 border rounded" style="background: ${flag.status === 'NORMAL' ? '#d4edda' : '#fff3cd'}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${statusIcon} ${key.replace(/_/g, ' ').toUpperCase()}</strong><br>
+                            <span class="${statusClass} fs-4">${value} ${flag.unit}</span>
+                            ${flag.status !== 'NORMAL' ? `<span class="badge bg-warning text-dark ms-2">${flag.status}</span>` : ''}
+                        </div>
+                    </div>
+                    <small class="text-muted">Normal Range: ${flag.normal_range} ${flag.unit}</small>
+                </div>
+            `;
+        }
+        valuesHTML += '</div>';
+        }
+        
+        document.getElementById('extractedValues').innerHTML = valuesHTML;
+        const totalFields = result.total_found + Object.keys(extractedPatientInfo).length;
+        document.getElementById('totalExtracted').textContent = totalFields;
+        resultsDiv.style.display = 'block';
+        
+        statusDiv.innerHTML = `
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Success!</strong> Found ${Object.keys(extractedPatientInfo).length} patient fields + ${result.total_found} lab values!
+            </div>
+        `;
+        
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Error:</strong> ${error.message}
+                <br><small>${error.stack}</small>
+            </div>
+        `;
+        console.error('OCR Error:', error);
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Process in Browser';
+    }
+}
+
+function applyExtractedValues() {
+    let appliedCount = 0;
+    
+    // 🆕 Apply patient information with blue styling
+    for (const [key, value] of Object.entries(extractedPatientInfo)) {
+        const field = document.getElementById(key);
+        if (field) {
+            field.value = value;
+            field.classList.add('border-primary');
+            field.style.borderWidth = '3px';
+            field.style.backgroundColor = '#cfe2ff';
+            field.style.transition = 'all 0.5s';
+            field.style.transform = 'scale(1.05)';
+            
+            setTimeout(() => {
+                field.style.transform = 'scale(1)';
+            }, 500);
+            
+            appliedCount++;
+        }
+    }
+    
+    // Apply lab values with green styling
+    for (const [key, value] of Object.entries(extractedLabData)) {
+        const field = document.getElementById(key);
+        if (field) {
+            field.value = value;
+            
+            // Visual feedback
+            field.classList.add('border-success');
+            field.style.borderWidth = '3px';
+            field.style.backgroundColor = '#d4edda';
+            field.style.transition = 'all 0.5s';
+            field.style.transform = 'scale(1.05)';
+            
+            setTimeout(() => {
+                field.style.transform = 'scale(1)';
+            }, 500);
+            
+            appliedCount++;
+        }
+    }
+    
+    const statusDiv = document.getElementById('uploadStatus');
+    statusDiv.innerHTML = `
+        <div class="alert alert-success mt-3">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Applied!</strong> Successfully filled ${appliedCount} fields in the form! ✨
+        </div>
+    `;
+    
+    setTimeout(() => {
+        document.getElementById('ocrResults').style.display = 'none';
+        statusDiv.innerHTML = '';
+    }, 3000);
+    
+    // Scroll to top of form
+    document.getElementById('patient_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
+{% endblock %}
+>>>>>>> Stashed changes

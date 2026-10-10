@@ -2,12 +2,22 @@
 Smart Drug Recommendation System
 Doctor-First Validation Workflow with Database Integration
 Author: CSE-AI Team, KKR & KSR Institute of Technology
+<<<<<<< Updated upstream
 Version: 3.0 (Database Integrated)
+=======
+Version: 4.0 (Enhanced Features + Authentication)
+>>>>>>> Stashed changes
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from config import config
+<<<<<<< Updated upstream
 from models import db, Patient, Drug, DrugInteraction, Prescription, PatientVisit, DrugFoodInteraction
+=======
+from models import db, Patient, Drug, DrugInteraction, Prescription, PatientVisit, DrugFoodInteraction, LabReport, DrugShortageAlert, User
+>>>>>>> Stashed changes
 import numpy as np
 import joblib
 import os
@@ -26,9 +36,26 @@ from utils import (
 # Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(config['development'])
+<<<<<<< Updated upstream
+=======
+app.config['UPLOAD_FOLDER'] = 'uploads/lab_reports'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
+>>>>>>> Stashed changes
 
 # Initialize database
 db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please login to access this page.'
+login_manager.login_message_category = 'warning'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Global variables for model
 model = None
@@ -48,6 +75,21 @@ def initialize_app():
         print(f"✓ Drug interactions: {DrugInteraction.query.count()}")
         print(f"✓ Drug-food interactions: {DrugFoodInteraction.query.count()}")
         print(f"✓ Patients in database: {Patient.query.count()}")
+        print(f"✓ Users in database: {User.query.count()}")
+        
+        # Create default admin user if not exists
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin',
+                email='admin@smartrx.com',
+                full_name='System Administrator',
+                role='admin'
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("✓ Default admin user created (username: admin, password: admin123)")
         
         # Try to load ML model
         try:
@@ -64,19 +106,110 @@ def initialize_app():
         print("✓ Application initialized successfully")
 
 
+# ============================================================================
+# AUTHENTICATION ROUTES
+# ============================================================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
+            login_user(user)
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            flash(f'Welcome back, {user.full_name}!', 'success')
+            
+            next_page = request.args.get('next')
+            return redirect(next_page if next_page else url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+    
+    return render_template('login.html')
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    """Signup page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        full_name = request.form.get('full_name')
+        
+        # Check if user exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists', 'error')
+            return render_template('signup.html')
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'error')
+            return render_template('signup.html')
+        
+        # Create new user
+        user = User(
+            username=username,
+            email=email,
+            full_name=full_name,
+            role='doctor'
+        )
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Account created successfully! Please login.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('signup.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout"""
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+
+# ============================================================================
+# MAIN APPLICATION ROUTES
+# ============================================================================
+
 @app.route('/')
 def index():
     """Home page"""
-    return render_template('index.html')
+    recent_patients = None
+    if current_user.is_authenticated:
+        recent_patients = Patient.query.order_by(
+            Patient.created_at.desc()
+        ).limit(5).all()
+    
+    return render_template('index.html', recent_patients=recent_patients)
 
 
 @app.route('/recommend')
+@login_required
 def recommend():
     """Patient registration form"""
     return render_template('patient_form.html')
 
 
-@app.route('/patient-dashboard', methods=['POST'])
+@app.route('/patient-dashboard', methods=['GET', 'POST'])
+@login_required
 def patient_dashboard():
     """
     Display patient dashboard after registration
@@ -185,6 +318,7 @@ def patient_dashboard():
 
 
 @app.route('/validate-drug', methods=['POST'])
+@login_required
 def validate_drug():
     """
     Validate if doctor's chosen drug is safe for patient
@@ -209,6 +343,11 @@ def validate_drug():
                                  drug_name=drug_name,
                                  is_safe=False,
                                  drug_info=None,
+<<<<<<< Updated upstream
+=======
+                                 dosage_info=None,
+                                 price_comparison=None,
+>>>>>>> Stashed changes
                                  checks={
                                      'allergy': {'is_safe': False, 'message': '❌ Drug not found in database'},
                                      'interaction': {'is_safe': False, 'message': ''},
@@ -227,11 +366,15 @@ def validate_drug():
         if not allergy_check['is_safe']:
             is_safe = False
         
+<<<<<<< Updated upstream
         # Check 2: Drug Interactions (Database)
         interaction_check = check_drug_interaction_db(
             drug_name,
             patient_data['current_medications']
         )
+=======
+        interaction_check = check_drug_interaction_db(drug_name, patient_data.get('current_medications', ''))
+>>>>>>> Stashed changes
         checks['interaction'] = interaction_check
         if not interaction_check['is_safe']:
             is_safe = False
@@ -249,6 +392,35 @@ def validate_drug():
         food_check = check_drug_food_interaction_db(drug_name)
         checks['food'] = food_check
         
+<<<<<<< Updated upstream
+=======
+        # 🆕 CALCULATE DOSAGE AUTOMATICALLY
+        dosage_info = None
+        try:
+            from Dosage_calculator import calculate_dose
+            
+            drug_data = drug_info.to_dict()
+            calc_patient_data = patient_data.copy()
+            calc_patient_data['frequency'] = 'BD'
+            calc_patient_data['duration'] = '7 days'
+            
+            dosage_result = calculate_dose(drug_data, calc_patient_data)
+            
+            if dosage_result['success']:
+                dosage_info = {
+                    'final_dose': dosage_result['final_dose'],
+                    'instructions': dosage_result['instructions'],
+                    'warnings': dosage_result.get('warnings', []),
+                    'calculations': dosage_result.get('calculations', {})
+                }
+        except Exception as e:
+            print(f"⚠ Dosage calculation failed: {str(e)}")
+            dosage_info = None
+        
+        # 🆕 PRICE COMPARISON
+        price_comparison = get_price_comparison(drug_info)
+        
+>>>>>>> Stashed changes
         # Get alternatives if drug is unsafe
         alternatives = []
         if not is_safe:
@@ -260,6 +432,11 @@ def validate_drug():
                              drug_name=drug_name,
                              is_safe=is_safe,
                              drug_info=drug_info,
+<<<<<<< Updated upstream
+=======
+                             dosage_info=dosage_info,
+                             price_comparison=price_comparison,
+>>>>>>> Stashed changes
                              checks=checks,
                              alternatives=alternatives)
     
@@ -271,7 +448,56 @@ def validate_drug():
                              error=f"Validation error: {str(e)}")
 
 
+<<<<<<< Updated upstream
+=======
+def get_price_comparison(drug_info):
+    """Get cheaper alternatives in same category"""
+    try:
+        if not drug_info.price:
+            return None
+        
+        # Find similar drugs in same category
+        similar_drugs = Drug.query.filter(
+            Drug.category == drug_info.category,
+            Drug.id != drug_info.id,
+            Drug.in_stock == True,
+            Drug.price.isnot(None)
+        ).order_by(Drug.price).limit(5).all()
+        
+        if not similar_drugs:
+            return None
+        
+        cheaper_options = []
+        for drug in similar_drugs:
+            if drug.price and drug_info.price:
+                savings = drug_info.price - drug.price
+                if savings > 0:
+                    cheaper_options.append({
+                        'drug_name': drug.drug_name,
+                        'generic_name': drug.generic_name,
+                        'price': drug.price,
+                        'savings': savings,
+                        'savings_percent': round((savings / drug_info.price) * 100, 1)
+                    })
+        
+        if not cheaper_options:
+            return None
+        
+        return {
+            'current_price': drug_info.price,
+            'current_drug': drug_info.drug_name,
+            'cheaper_options': cheaper_options[:3],
+            'max_savings': max([opt['savings'] for opt in cheaper_options]) if cheaper_options else 0
+        }
+    
+    except Exception as e:
+        print(f"Error in price comparison: {str(e)}")
+        return None
+
+
+>>>>>>> Stashed changes
 @app.route('/ai-suggest', methods=['POST'])
+@login_required
 def ai_suggest():
     """
     Get AI-powered drug suggestions
@@ -324,6 +550,7 @@ def ai_suggest():
 
 
 @app.route('/confirm-prescription', methods=['POST'])
+@login_required
 def confirm_prescription():
     """
     Confirm and generate prescription
@@ -367,42 +594,41 @@ def confirm_prescription():
         traceback.print_exc()
         return redirect(url_for('recommend'))
 
+# 🆕 ADD THIS TO YOUR app.py FILE
 
 @app.route('/search-drugs')
 def search_drugs():
+<<<<<<< Updated upstream
     """
     Search drugs by name or category (AJAX endpoint)
     """
+=======
+    """API for drug autocomplete"""
+>>>>>>> Stashed changes
     query = request.args.get('q', '').strip()
-    category = request.args.get('category', '').strip()
     
-    if not query and not category:
+    if len(query) < 2:
         return jsonify([])
     
+<<<<<<< Updated upstream
     # Search in database
     drugs_query = Drug.query
+=======
+    drugs = Drug.query.filter(
+        (Drug.drug_name.ilike(f'%{query}%')) | 
+        (Drug.generic_name.ilike(f'%{query}%'))
+    ).limit(20).all()
+>>>>>>> Stashed changes
     
-    if query:
-        drugs_query = drugs_query.filter(
-            (Drug.drug_name.ilike(f'%{query}%')) | 
-            (Drug.generic_name.ilike(f'%{query}%'))
-        )
-    
-    if category:
-        drugs_query = drugs_query.filter(Drug.category.ilike(f'%{category}%'))
-    
-    drugs = drugs_query.limit(20).all()
-    
-    results = [{
-        'drug_name': drug.drug_name,
-        'generic_name': drug.generic_name,
-        'category': drug.category,
-        'price': drug.price,
-        'dosage_forms': drug.dosage_forms
-    } for drug in drugs]
+    results = []
+    for drug in drugs:
+        results.append({
+            'drug_name': drug.drug_name,
+            'generic_name': drug.generic_name,
+            'category': drug.category
+        })
     
     return jsonify(results)
-
 
 @app.route('/drug-info/<drug_name>')
 def drug_info(drug_name):
@@ -449,9 +675,14 @@ def get_ai_alternatives(patient_data):
         # Filter safe drugs
         safe_recommendations = []
         for rec in recommendations[:10]:
+<<<<<<< Updated upstream
             # Quick safety check
             allergy_safe = check_allergy(rec['drug'], patient_data['allergies'])['is_safe']
             interaction_safe = check_drug_interaction_db(rec['drug'], patient_data['current_medications'])['is_safe']
+=======
+            allergy_safe = check_allergy(rec['drug'], patient_data.get('allergies', ''))['is_safe']
+            interaction_safe = check_drug_interaction_db(rec['drug'], patient_data.get('current_medications', ''))['is_safe']
+>>>>>>> Stashed changes
             
             drug_obj = Drug.query.filter(Drug.drug_name.ilike(rec['drug'])).first()
             if drug_obj:
@@ -473,10 +704,15 @@ def get_ai_alternatives(patient_data):
 
 
 def get_rule_based_suggestions(patient_data):
+<<<<<<< Updated upstream
     """
     Fallback rule-based suggestions from database
     """
     symptoms_lower = patient_data['symptoms'].lower()
+=======
+    """Fallback rule-based suggestions from database"""
+    symptoms_lower = patient_data.get('symptoms', '').lower()
+>>>>>>> Stashed changes
     
     # Query database for relevant drugs
     suggestions = []
@@ -519,6 +755,7 @@ def get_rule_based_suggestions(patient_data):
     return unique_suggestions[:5]
 
 @app.route('/analyze-symptoms', methods=['POST'])
+@login_required
 def analyze_symptoms():
     """
     Analyze symptoms using NLP (Phase 12.5)
@@ -571,7 +808,12 @@ def health_check():
         'drugs_count': Drug.query.count(),
         'patients_count': Patient.query.count(),
         'prescriptions_count': Prescription.query.count(),
+<<<<<<< Updated upstream
         'workflow': 'doctor-first-validation-db',
+=======
+        'users_count': User.query.count(),
+        'workflow': 'doctor-first-validation-enhanced-v4-auth',
+>>>>>>> Stashed changes
         'timestamp': datetime.now().isoformat()
     })
 
@@ -592,8 +834,13 @@ def internal_error(e):
 
 if __name__ == '__main__':
     print("\n" + "="*70)
+<<<<<<< Updated upstream
     print(" " * 12 + "🏥 SMART DRUG RECOMMENDATION SYSTEM v3.0")
     print(" " * 18 + "Database Integrated + Enhanced AI")
+=======
+    print(" " * 10 + "🏥 SMART DRUG RECOMMENDATION SYSTEM v4.0")
+    print(" " * 15 + "Enhanced Features + Authentication")
+>>>>>>> Stashed changes
     print("="*70)
     print("📚 B.Tech CSE-AI Project | KKR & KSR Institute of Technology")
     print("👥 Team: Batch 22JR1A4319")
@@ -603,7 +850,29 @@ if __name__ == '__main__':
     print("\n🔧 Initializing application...\n")
     initialize_app()
     
+<<<<<<< Updated upstream
     # Run Flask app
+=======
+    # REGISTER ENHANCED ROUTES
+    print("\n🔌 Registering enhanced routes...")
+    try:
+        from enhanced_routes import register_enhanced_routes
+        
+        models_dict = {
+            'Drug': Drug,
+            'Patient': Patient,
+            'Prescription': Prescription,
+            'LabReport': LabReport,
+            'DrugShortageAlert': DrugShortageAlert,
+            'PatientVisit': PatientVisit
+        }
+        
+        register_enhanced_routes(app, db, models_dict)
+        print("✓ Enhanced routes registered successfully")
+    except Exception as e:
+        print(f"⚠ Enhanced routes not loaded: {str(e)}")
+    
+>>>>>>> Stashed changes
     print("\n" + "="*70)
     print("🚀 Starting Flask Development Server...")
     print("="*70)
@@ -611,11 +880,25 @@ if __name__ == '__main__':
     print("📍 Network URL:  http://0.0.0.0:5000")
     print("="*70)
     print("\n⌨️  Press CTRL+C to stop the server")
+<<<<<<< Updated upstream
     print("\n💡 New Features:")
     print("   • SQLite Database Integration")
     print("   • Patient Records Saved")
     print("   • Drug-Food Interaction Checks")
     print("   • Drug Search API")
+=======
+    print("\n💡 v4.0 Features:")
+    print("   • 🔐 Login/Signup Authentication")
+    print("   • 💰 Price Comparison (Save Money!)")
+    print("   • 💊 Dosage Calculator (Weight-Based)")
+    print("   • ⚠️  Drug Shortage Management")
+    print("   • 📄 Lab Report OCR (Auto-Extract)")
+    print("   • 🌐 Multi-Language Support")
+    print("="*70)
+    print("\n🔑 Default Login:")
+    print("   Username: admin")
+    print("   Password: admin123")
+>>>>>>> Stashed changes
     print("="*70 + "\n")
     
     app.run(debug=True, host='0.0.0.0', port=5000)

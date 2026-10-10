@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - SmartRx{% endblock %}
+
+{% block content %}
+<section class="vh-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card shadow-2-strong" style="border-radius: 1rem;">
+                    <div class="card-body p-5">
+                        
+                        <div class="text-center mb-4">
+                            <i class="fas fa-user-plus" style="font-size: 3em; color: #667eea;"></i>
+                            <h3 class="mb-2 mt-3">Create Account</h3>
+                            <p class="text-muted">Join SmartRx</p>
+                        </div>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST">
+                            <div class="form-outline mb-3">
+                                <label class="form-label" for="full_name">
+                                    <i class="fas fa-id-card me-2"></i>Full Name
+                                </label>
+                                <input type="text" id="full_name" name="full_name" class="form-control" 
+                                       required placeholder="Dr. John Doe">
+                            </div>
+
+                            <div class="form-outline mb-3">
+                                <label class="form-label" for="username">
+                                    <i class="fas fa-user me-2"></i>Username
+                                </label>
+                                <input type="text" id="username" name="username" class="form-control" 
+                                       required placeholder="johndoe">
+                            </div>
+
+                            <div class="form-outline mb-3">
+                                <label class="form-label" for="email">
+                                    <i class="fas fa-envelope me-2"></i>Email
+                                </label>
+                                <input type="email" id="email" name="email" class="form-control" 
+                                       required placeholder="doctor@example.com">
+                            </div>
+
+                            <div class="form-outline mb-4">
+                                <label class="form-label" for="password">
+                                    <i class="fas fa-lock me-2"></i>Password
+                                </label>
+                                <input type="password" id="password" name="password" class="form-control" 
+                                       required minlength="6" placeholder="Minimum 6 characters">
+                            </div>
+
+                            <button class="btn btn-primary btn-lg btn-block w-100" type="submit">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+
+                            <hr class="my-4">
+
+                            <div class="text-center">
+                                <p>Already have an account? 
+                                    <a href="{{ url_for('login') }}" class="fw-bold">Login</a>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

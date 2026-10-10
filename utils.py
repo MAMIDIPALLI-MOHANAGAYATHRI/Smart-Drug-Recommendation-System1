@@ -1,6 +1,7 @@
 """
 Smart Drug Recommendation System
 Utility Functions for Data Processing and Safety Checks (Database Version)
+🔧 FIXED VERSION - Better drug search and food interaction logic
 """
 
 import pandas as pd
@@ -148,17 +149,17 @@ def check_drug_interaction_db(drug_name, current_medications):
         for interaction in interactions:
             severity = interaction.severity.lower()
             
-            if severity == 'severe':
+            if severity in ['severe', 'critical', 'high']:
                 severe_interactions.append({
                     'drug': med,
-                    'description': interaction.description,
-                    'management': interaction.management
+                    'description': interaction.description if hasattr(interaction, 'description') else 'Interaction detected',
+                    'management': interaction.management if hasattr(interaction, 'management') else 'Consult physician'
                 })
-            elif severity == 'moderate':
+            elif severity in ['moderate', 'low']:
                 moderate_interactions.append({
                     'drug': med,
-                    'description': interaction.description,
-                    'management': interaction.management
+                    'description': interaction.description if hasattr(interaction, 'description') else 'Interaction detected',
+                    'management': interaction.management if hasattr(interaction, 'management') else 'Monitor closely'
                 })
     
     # Return results
@@ -262,9 +263,10 @@ def check_contraindications_db(drug_obj, patient_data):
         return {'is_safe': True, 'message': '', 'warning': '⚠️ Unable to verify all contraindications'}
 
 
+# 🆕 FIXED: Better food interaction logic - filters out generic alcohol warnings
 def check_drug_food_interaction_db(drug_name):
     """
-    Check drug-food interactions from database (Phase 15.5)
+    Check drug-food interactions from database (FIXED VERSION)
     
     Args:
         drug_name: Name of the drug
@@ -281,16 +283,19 @@ def check_drug_food_interaction_db(drug_name):
         if not interactions:
             return {
                 'has_interactions': False,
-                'message': '',
+                'message': '✅ No specific food interactions',
                 'interactions': []
             }
         
-        # Categorize by severity
-        severe = []
-        moderate = []
-        minor = []
+        # 🆕 Categorize interactions - separate alcohol from others
+        severe_non_alcohol = []
+        moderate_non_alcohol = []
+        minor_non_alcohol = []
+        alcohol_warning = None
         
         for interaction in interactions:
+            food_lower = interaction.food_item.lower()
+            
             interaction_data = {
                 'food': interaction.food_item,
                 'type': interaction.interaction_type,
@@ -298,30 +303,53 @@ def check_drug_food_interaction_db(drug_name):
                 'recommendation': interaction.recommendation
             }
             
-            if interaction.severity == 'severe':
-                severe.append(interaction_data)
-            elif interaction.severity == 'moderate':
-                moderate.append(interaction_data)
+            # Separate alcohol warnings from other interactions
+            if 'alcohol' in food_lower:
+                # Only keep ONE alcohol warning (the most severe)
+                if not alcohol_warning or interaction.severity == 'severe':
+                    alcohol_warning = interaction_data
             else:
-                minor.append(interaction_data)
+                # Categorize non-alcohol interactions
+                if interaction.severity == 'severe':
+                    severe_non_alcohol.append(interaction_data)
+                elif interaction.severity == 'moderate':
+                    moderate_non_alcohol.append(interaction_data)
+                else:
+                    minor_non_alcohol.append(interaction_data)
         
-        # Generate message
+        # 🆕 Generate message - prioritize specific food interactions
         messages = []
-        if severe:
-            food_list = ', '.join([i['food'] for i in severe])
+        
+        # Show specific food interactions FIRST (these are more important)
+        if severe_non_alcohol:
+            food_list = ', '.join([i['food'] for i in severe_non_alcohol[:2]])  # Max 2
             messages.append(f"❌ AVOID: {food_list}")
         
-        if moderate:
-            food_list = ', '.join([i['food'] for i in moderate])
+        if moderate_non_alcohol and len(messages) < 2:
+            food_list = ', '.join([i['food'] for i in moderate_non_alcohol[:2]])  # Max 2
             messages.append(f"⚠️ CAUTION: {food_list}")
+        
+        # Add alcohol as LAST warning (generic advice)
+        if alcohol_warning and len(messages) < 2:
+            messages.append(f"🍺 {alcohol_warning['food']}: {alcohol_warning['recommendation']}")
+        
+        # If ONLY alcohol warning exists, show it
+        if not messages and alcohol_warning:
+            messages.append(f"🍺 {alcohol_warning['recommendation']}")
+        
+        # Combine all interactions for details
+        all_interactions = severe_non_alcohol + moderate_non_alcohol + minor_non_alcohol
+        if alcohol_warning:
+            all_interactions.append(alcohol_warning)
         
         return {
             'has_interactions': True,
-            'message': ' | '.join(messages) if messages else '',
-            'interactions': severe + moderate + minor,
-            'severe': severe,
-            'moderate': moderate,
-            'minor': minor
+            'message': ' | '.join(messages) if messages else '✅ No significant interactions',
+            'interactions': all_interactions,
+            'severe': severe_non_alcohol,
+            'moderate': moderate_non_alcohol,
+            'minor': minor_non_alcohol,
+            'alcohol': alcohol_warning
         }
     
     except Exception as e:

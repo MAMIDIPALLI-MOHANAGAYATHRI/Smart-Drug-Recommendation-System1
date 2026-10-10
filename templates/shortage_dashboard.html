@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Drug Shortage Dashboard - SmartRx{% endblock %}
+
+{% block content %}
+<button type="button" class="btn btn-primary" onclick="window.history.back()">
+    <i class="fas fa-arrow-left me-2"></i>
+    Back
+</button>
+<section class="py-5" style="background: linear-gradient(135deg, #FFF3E0 0%, #F8F9FA 100%); min-height: 100vh;">
+    <div class="container">
+        
+        <!-- Page Header -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">
+                <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                Drug Shortage Management
+            </h2>
+            <p class="text-muted">Monitor stock levels and find therapeutic alternatives</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card border-danger shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="text-danger mb-0">{{ summary.critical_shortages or 0 }}</h1>
+                        <p class="text-muted mb-0"><i class="fas fa-fire me-1"></i> Critical</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-warning shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="text-warning mb-0">{{ summary.high_shortages or 0 }}</h1>
+                        <p class="text-muted mb-0"><i class="fas fa-exclamation me-1"></i> High Priority</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-info shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="text-info mb-0">{{ summary.out_of_stock_count or 0 }}</h1>
+                        <p class="text-muted mb-0"><i class="fas fa-box-open me-1"></i> Out of Stock</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card border-secondary shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="text-secondary mb-0">{{ summary.low_stock_count or 0 }}</h1>
+                        <p class="text-muted mb-0"><i class="fas fa-battery-quarter me-1"></i> Low Stock</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alternative Finder Tool -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Find Alternative Drugs
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control form-control-lg" 
+                               id="searchDrugName" 
+                               placeholder="Enter drug name to find alternatives...">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg w-100" onclick="findAlternatives()">
+                            <i class="fas fa-magic me-2"></i>
+                            Find Alternatives
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alternatives Results -->
+                <div id="alternativesResults" class="mt-4" style="display: none;">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-list me-2"></i>
+                        Available Alternatives:
+                    </h6>
+                    <div id="alternativesList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Out of Stock Drugs -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-box-open me-2"></i>
+                    Currently Out of Stock ({{ out_of_stock|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if out_of_stock %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Drug Name</th>
+                                <th>Category</th>
+                                <th>Reason</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for drug in out_of_stock %}
+                            <tr>
+                                <td><strong>{{ drug.drug_name }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ drug.category }}</span></td>
+                                <td>{{ drug.shortage_reason or 'Not specified' }}</td>
+                                <td>{{ drug.last_stock_update.strftime('%Y-%m-%d') if drug.last_stock_update else 'N/A' }}</td>
+                                <td>
+                                    <!-- FIX: Use data attributes instead of Jinja2 vars inside onclick strings -->
+                                    <button class="btn btn-sm btn-primary"
+                                            data-drug-name="{{ drug.drug_name }}"
+                                            onclick="findAlternativesForDrug(this.dataset.drugName)">
+                                        <i class="fas fa-search me-1"></i> Alternatives
+                                    </button>
+                                    <button class="btn btn-sm btn-success"
+                                            data-drug-id="{{ drug.id }}"
+                                            onclick="markAsAvailable(this.dataset.drugId)">
+                                        <i class="fas fa-check me-1"></i> Mark Available
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Good News!</strong> No drugs are currently out of stock.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Active Shortage Alerts ({{ active_alerts|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if active_alerts %}
+                <div class="list-group">
+                    {% for alert in active_alerts %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    {% if alert.severity == 'CRITICAL' %}
+                                    <span class="badge bg-danger">{{ alert.severity }}</span>
+                                    {% elif alert.severity == 'HIGH' %}
+                                    <span class="badge bg-warning">{{ alert.severity }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ alert.severity }}</span>
+                                    {% endif %}
+                                    Drug ID: {{ alert.drug_id }}
+                                </h6>
+                                <p class="mb-1">{{ alert.reason }}</p>
+                                <small class="text-muted">
+                                    Created: {{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                            <!-- FIX: Use data attribute instead of Jinja2 var inside onclick string -->
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    data-alert-id="{{ alert.id }}"
+                                    onclick="resolveAlert(this.dataset.alertId)">
+                                <i class="fas fa-check me-1"></i> Resolve
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No active alerts at this time.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Alternative Details Modal -->
+<div class="modal fade" id="alternativeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-pills me-2"></i>
+                    Alternative Drug Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="alternativeModalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function findAlternatives() {
+    const drugName = document.getElementById('searchDrugName').value.trim();
+    
+    if (!drugName) {
+        alert('Please enter a drug name');
+        return;
+    }
+    
+    await findAlternativesForDrug(drugName);
+}
+
+async function findAlternativesForDrug(drugName) {
+    const resultsDiv = document.getElementById('alternativesResults');
+    const listDiv = document.getElementById('alternativesList');
+    
+    // Show loading
+    resultsDiv.style.display = 'block';
+    listDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p>Finding alternatives...</p></div>';
+    
+    try {
+        const response = await fetch(`/api/drug-alternatives/${encodeURIComponent(drugName)}`);
+        const result = await response.json();
+        
+        if (result.success && result.alternatives.length > 0) {
+            let html = '<div class="row">';
+            
+            result.alternatives.forEach((alt, index) => {
+                const matchClass = alt.match_score >= 90 ? 'success' : alt.match_score >= 75 ? 'primary' : 'info';
+                const equivBadge = alt.equivalent ? '<span class="badge bg-success ms-2">Equivalent</span>' : '';
+                
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-${matchClass}">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    ${index + 1}. ${alt.drug_name} ${equivBadge}
+                                </h6>
+                                <div class="mb-2">
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-${matchClass}" style="width: ${alt.match_score}%"></div>
+                                    </div>
+                                    <small class="text-muted">Match Score: ${alt.match_score}%</small>
+                                </div>
+                                <p class="mb-2"><small><strong>Reason:</strong> ${alt.reason}</small></p>
+                                <p class="mb-2"><small><strong>Category:</strong> ${alt.category}</small></p>
+                                <p class="mb-2"><small><strong>Price:</strong> &#8377;${alt.price || 'N/A'}</small></p>
+                                ${alt.warnings && alt.warnings.length > 0 ? `
+                                    <div class="alert alert-warning py-1 px-2 mb-2">
+                                        <small><i class="fas fa-exclamation-triangle me-1"></i> ${alt.warnings.join(', ')}</small>
+                                    </div>
+                                ` : ''}
+                                ${alt.in_stock ? 
+                                    '<span class="badge bg-success"><i class="fas fa-check me-1"></i>In Stock</span>' : 
+                                    '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Out of Stock</span>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            listDiv.innerHTML = html;
+        } else {
+            listDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No alternatives found for "${drugName}"
+                </div>
+            `;
+        }
+    } catch (error) {
+        listDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                Error: ${error.message}
+            </div>
+        `;
+    }
+}
+
+async function markAsAvailable(drugId) {
+    if (!confirm('Mark this drug as available/in stock?')) return;
+    
+    try {
+        const response = await fetch('/api/drug-shortage/resolve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({drug_id: drugId, stock_level: 100})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`${result.drug_name} marked as available!`);
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function resolveAlert(alertId) {
+    if (!confirm('Resolve this alert?')) return;
+
+    try {
+        const response = await fetch('/api/drug-shortage/resolve-alert', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({alert_id: alertId})
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Alert resolved successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
